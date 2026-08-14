@@ -49,11 +49,16 @@
   #focusFill { height:100%; width:100%; background:linear-gradient(90deg,#c99bff,#7fb4ff); border-radius:5px; }
   #focusLbl { font-size:9.5px; font-weight:800; letter-spacing:1px; opacity:.65; }
   #orb { width:28px; height:28px; border-radius:50%; flex:none; background:radial-gradient(circle at 35% 35%, #fff8, transparent 60%), var(--gold); animation:pulseGlow 2.2s infinite; }
+  #hudRow3 { display:flex; align-items:center; gap:5px; flex-wrap:wrap; pointer-events:auto; }
+  .cpill { padding:3px 9px; border-radius:9px; background:var(--glass); border:1px solid var(--line); font-size:10.5px; font-weight:800; letter-spacing:.3px; cursor:pointer; backdrop-filter:blur(5px); font-variant-numeric:tabular-nums; }
+  .cpill.done { border-color:rgba(142,255,193,.65); color:var(--mint); text-shadow:0 0 8px rgba(142,255,193,.5); }
+  .cpill.rare { border-color:rgba(158,243,255,.5); }
 
-  #menuBtns { position:fixed; right:8px; top:calc(env(safe-area-inset-top,0px) + 66px); display:flex; flex-direction:column; gap:8px; z-index:6; }
-  .mbtn { width:44px; height:44px; border-radius:13px; border:1px solid var(--line); background:var(--glass); color:#fff; font-size:20px; cursor:pointer; backdrop-filter:blur(6px); box-shadow:0 3px 10px rgba(0,0,0,.35); }
+  #menuBtns { position:fixed; right:8px; top:calc(env(safe-area-inset-top,0px) + 92px); display:flex; flex-direction:column; gap:8px; z-index:6; }
+  .mbtn { width:44px; height:44px; border-radius:13px; border:1px solid var(--line); background:var(--glass); color:#fff; font-size:20px; cursor:pointer; backdrop-filter:blur(6px); box-shadow:0 3px 10px rgba(0,0,0,.35); position:relative; }
   .mbtn:active { transform:scale(.92); }
-  #artBtns { position:fixed; left:8px; top:calc(env(safe-area-inset-top,0px) + 66px); display:flex; flex-direction:column; gap:8px; z-index:6; }
+  .mbtn .dot { position:absolute; top:-3px; right:-3px; width:12px; height:12px; border-radius:50%; background:var(--mint); box-shadow:0 0 8px var(--mint); display:none; }
+  #artBtns { position:fixed; left:8px; top:calc(env(safe-area-inset-top,0px) + 92px); display:flex; flex-direction:column; gap:8px; z-index:6; }
   .abtn { width:50px; height:50px; border-radius:15px; border:1px solid rgba(255,215,94,.35); background:var(--glass-brt); color:#fff; font-size:23px; cursor:pointer; position:relative; box-shadow:0 0 14px rgba(255,215,94,.22), 0 3px 10px rgba(0,0,0,.4); }
   .abtn:disabled { opacity:.4; box-shadow:none; }
   .abtn .cd { position:absolute; right:4px; bottom:2px; font-size:11px; font-weight:900; color:var(--gold); text-shadow:0 1px 2px #000; }
@@ -92,8 +97,7 @@
   #moodMarker { position:absolute; top:-2px; bottom:-2px; width:5px; border-radius:3px; background:#fff; box-shadow:0 0 8px #fff; left:50%; transition:left .25s; }
   .meter.charge { background:rgba(255,255,255,.08); }
   #peakZone { position:absolute; top:0; bottom:0; left:75%; right:0; background:repeating-linear-gradient(-45deg, rgba(255,255,255,.22) 0 5px, rgba(255,255,255,.05) 5px 10px); }
-  #chargeFill { position:absolute; top:0; bottom:0; left:0; width:0%; background:linear-gradient(90deg,#6b5115,var(--gold)); transition:width .25s; }
-  #chargeFill.neg { background:linear-gradient(90deg,#38205c,var(--viol)); }
+  #chargeFill { position:absolute; top:0; bottom:0; left:0; width:0%; background:linear-gradient(90deg,#6b5115,var(--gold)); transition:width .25s, background .4s; }
   #chargeFill.peaking { animation:barPulse .5s infinite; }
   #chargeTxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:900; letter-spacing:1px; text-shadow:0 1px 2px #000; }
   #npcActions { display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }
@@ -146,8 +150,32 @@
   .tag.blight { background:#4c2b7a; color:#d9b8ff; }
   .tag.turb { background:#5c4a1d; color:#ffe08e; }
 
+  /* ---------- contracts / relics / records ---------- */
+  .cItem { padding:11px 12px; border-radius:13px; background:rgba(255,255,255,.05); margin-bottom:8px; border:1px solid rgba(255,255,255,.07); }
+  .cItem.done { border-color:rgba(142,255,193,.5); background:rgba(30,80,58,.22); }
+  .cItem.hard { border-color:rgba(158,243,255,.35); }
+  .cItem .ct { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:800; }
+  .cItem .ct .rw { margin-left:auto; font-size:12px; color:var(--gold); white-space:nowrap; }
+  .cItem .cb { height:8px; border-radius:4px; background:rgba(255,255,255,.08); margin-top:7px; overflow:hidden; }
+  .cItem .cbf { height:100%; border-radius:4px; background:linear-gradient(90deg,#3fb2ff,var(--mint)); transition:width .3s; }
+  .cItem.done .cbf { background:linear-gradient(90deg,var(--gold-deep),var(--gold)); }
+  .relicRow { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:6px; }
+  .relicCard { width:100%; display:flex; gap:10px; align-items:center; padding:9px 11px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(158,243,255,.22); }
+  .relicCard.lock { opacity:.35; border-color:rgba(255,255,255,.08); }
+  .relicCard .ri { font-size:22px; }
+  .relicCard .rn { font-weight:800; font-size:13.5px; }
+  .relicCard .rd { font-size:11.5px; opacity:.7; line-height:1.3; }
+  .mileRow { display:flex; gap:9px; align-items:center; padding:7px 4px; border-bottom:1px solid rgba(255,255,255,.06); font-size:12.5px; }
+  .mileRow .mi { width:22px; text-align:center; }
+  .mileRow.lock { opacity:.4; }
+  .essRow { display:flex; align-items:center; gap:7px; margin:3px 0; font-size:11.5px; }
+  .essRow .el { width:64px; opacity:.8; font-weight:700; }
+  .essRow .eb { flex:1; height:8px; border-radius:4px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .essRow .ebf { height:100%; border-radius:4px; }
+  .essRow .ev { width:48px; text-align:right; font-variant-numeric:tabular-nums; opacity:.85; }
+
   /* ---------- toasts ---------- */
-  #toasts { position:fixed; top:calc(env(safe-area-inset-top,0px) + 74px); left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:15; pointer-events:none; }
+  #toasts { position:fixed; top:calc(env(safe-area-inset-top,0px) + 98px); left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:15; pointer-events:none; }
   .toast { background:var(--glass-brt); border:1px solid var(--line); padding:8px 15px; border-radius:13px; font-size:13px; font-weight:700; animation:popIn .3s ease-out; max-width:86vw; text-align:center; backdrop-filter:blur(6px); box-shadow:0 4px 14px rgba(0,0,0,.4); }
 
   .titleWrap { text-align:center; padding:12px 0 6px; }
@@ -172,6 +200,7 @@
     <div class="bar"><div id="quotaFill"></div><span id="quotaTxt">QUOTA 0 / 90</span></div>
     <div id="focusWrap"><span id="focusLbl">FOCUS</span><div id="focusBar"><div id="focusFill"></div></div></div>
   </div>
+  <div id="hudRow3"></div>
 </div>
 <div id="vignette"></div>
 <div id="flash"></div>
@@ -179,6 +208,7 @@
 <div id="specCard"></div>
 
 <div id="menuBtns" style="display:none">
+  <button class="mbtn" onclick="openContracts()">📜<span class="dot" id="cDot"></span></button>
   <button class="mbtn" onclick="openShop()">🛍️</button>
   <button class="mbtn" onclick="openCase()">📦</button>
   <button class="mbtn" onclick="openMap()">🗺️</button>
@@ -201,17 +231,19 @@
 <script>
 'use strict';
 /* =========================================================
-   AURA FARM — harvest emotional energy. Radiance vs Blight.
+   AURA FARM v4 — harvest emotional energy. Radiance vs Blight.
+   Six essences, Broker contracts, relics, Mara the Gray.
    ========================================================= */
 
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp = (a,b,t)=>a+(b-a)*t;
 const rnd = (a,b)=>a+Math.random()*(b-a);
+const pick = arr=>arr[Math.floor(Math.random()*arr.length)];
 const $ = id=>document.getElementById(id);
 
 /* ---------------- static data ---------------- */
 const DAY_LEN = 120;
-const LAST_DAY = 12;
+const LAST_DAY = 14;
 const quotaFor = d => 90 + 55*(d-1);
 
 const TIERS = [
@@ -223,11 +255,28 @@ const TIERS = [
 ];
 const tierOf = i => TIERS.find(t=>i>=t.min);
 
+/* Six essences. What you harvest depends on where you steered the feeling. */
+const EMOTIONS = {
+  joy:   { n:'Joy',    icon:'☀️', c:'#ffd75e', rgb:'255,215,94'  },
+  hope:  { n:'Hope',   icon:'🌿', c:'#8effc1', rgb:'142,255,193' },
+  awe:   { n:'Awe',    icon:'✨', c:'#9ef3ff', rgb:'158,243,255', rare:true },
+  sorrow:{ n:'Sorrow', icon:'💧', c:'#6fa8ff', rgb:'111,168,255' },
+  rage:  { n:'Rage',   icon:'🔥', c:'#ff6b52', rgb:'255,107,82'  },
+  dread: { n:'Dread',  icon:'🕸️', c:'#b06bff', rgb:'176,107,255', rare:true },
+};
+const EMO_KEYS = Object.keys(EMOTIONS);
+function emotionOf(v,i){
+  if (v>=0) return (v>=0.6 && i>=0.85) ? 'awe' : (v>=0.45 ? 'joy' : 'hope');
+  return (v<=-0.6 && i>=0.85) ? 'dread' : (i>=0.55 ? 'rage' : 'sorrow');
+}
+
 const VENUES = [
-  { id:'park',   name:'Dawnlight Park',    desc:'Calm, sunny, forgiving. Emotions drift gently upward.',      ambient: 0.06, volMult:0.85, bloomAt:500,  sky:['#1b2a4a','#3a2f5c'], ground:'#16321f' },
+  { id:'park',   name:'Dawnlight Park',    desc:'Calm, sunny, forgiving. Emotions drift gently upward.',      ambient: 0.06, volMult:0.85, bloomAt:500,  sky:['#2a5b9e','#7ab8d8'], ground:'#1d4227', outdoor:true },
   { id:'club',   name:'The Neon Cellar',   desc:'Loud and volatile. Feelings spike fast in every direction.', ambient: 0.00, volMult:1.55, bloomAt:900,  sky:['#180a2e','#3d0f4f'], ground:'#1a0f2e' },
   { id:'office', name:'Grindstone Offices',desc:'Fluorescent stress. Moods lean sour — rich soil for Blight.',ambient:-0.08, volMult:1.10, bloomAt:1300, sky:['#101622','#232c3d'], ground:'#1c2230' },
-  { id:'market', name:'The Night Market',  desc:'Lanterns and haggling. The mood swings like a pendulum all day.', ambient:0, volMult:1.25, bloomAt:1700, sky:['#0d0d26','#2e1240'], ground:'#241536' },
+  { id:'market', name:'The Night Market',  desc:'Lanterns and haggling. The mood swings like a pendulum all day.', ambient:0, volMult:1.25, bloomAt:1700, sky:['#0d0d26','#2e1240'], ground:'#241536', outdoor:true, night:true },
+  { id:'chapel', name:'The Velvet Chapel', desc:'Weddings at noon, funerals at dusk. Awe and Sorrow run deep here.', ambient:0, volMult:1.15, bloomAt:2200, sky:['#141033','#2b1b4e'], ground:'#221a38' },
+  { id:'rooftop',name:'Skyline Rooftop',   desc:'The city glitters below. Big feelings, thin air.',            ambient:0.02, volMult:1.7, bloomAt:2800, sky:['#070b1e','#1c1440'], ground:'#191b2e', outdoor:true, night:true },
 ];
 const venueById = id => VENUES.find(v=>v.id===id);
 
@@ -283,6 +332,30 @@ const ROSTER = [
   { id:'m8', name:'Hazel',  venue:'market', group:'The Buskers',      base: 0.20, vol:1.3, res:1.0 },
   { id:'m9', name:'Ines',   venue:'market', group:'The Buskers',      base:-0.10, vol:1.6, res:0.9 },
   { id:'m10',name:'Jojo',   venue:'market', group:'The Buskers',      base: 0.35, vol:1.2, res:1.1 },
+  // The Velvet Chapel (11)
+  { id:'ch1', name:'Vera',  venue:'chapel', group:'The Choir',         base: 0.20, vol:0.9, res:1.2 },
+  { id:'ch2', name:'Silas', venue:'chapel', group:'The Choir',         base:-0.10, vol:0.8, res:1.1 },
+  { id:'ch3', name:'Maud',  venue:'chapel', group:'The Choir',         base: 0.30, vol:0.7, res:1.3 },
+  { id:'ch4', name:'Perry', venue:'chapel', group:'The Choir',         base: 0.05, vol:1.2, res:0.9 },
+  { id:'ch5', name:'Edith', venue:'chapel', group:'The Mourners',      base:-0.45, vol:0.9, res:0.8 },
+  { id:'ch6', name:'Amos',  venue:'chapel', group:'The Mourners',      base:-0.30, vol:0.7, res:1.0 },
+  { id:'ch7', name:'Clara', venue:'chapel', group:'The Mourners',      base:-0.20, vol:1.1, res:0.9 },
+  { id:'ch8', name:'Tom',   venue:'chapel', group:'The Wedding Party', base: 0.50, vol:1.3, res:1.2 },
+  { id:'ch9', name:'Bess',  venue:'chapel', group:'The Wedding Party', base: 0.45, vol:1.1, res:1.1 },
+  { id:'ch10',name:'Rina',  venue:'chapel', group:'The Wedding Party', base: 0.25, vol:1.4, res:1.0 },
+  { id:'ch11',name:'Hugo',  venue:'chapel', group:'The Wedding Party', base: 0.10, vol:1.2, res:1.0 },
+  // Skyline Rooftop (11)
+  { id:'r1', name:'Nova',   venue:'rooftop', group:'The Stargazers',    base: 0.30, vol:0.8, res:1.2 },
+  { id:'r2', name:'Orin',   venue:'rooftop', group:'The Stargazers',    base: 0.10, vol:0.9, res:1.1 },
+  { id:'r3', name:'Suki',   venue:'rooftop', group:'The Stargazers',    base: 0.40, vol:1.0, res:1.3 },
+  { id:'r4', name:'Vega',   venue:'rooftop', group:'The Stargazers',    base:-0.05, vol:1.1, res:1.0 },
+  { id:'r5', name:'Zed',    venue:'rooftop', group:'The Afterparty',    base: 0.35, vol:1.7, res:1.0 },
+  { id:'r6', name:'Pia',    venue:'rooftop', group:'The Afterparty',    base: 0.20, vol:1.5, res:0.9 },
+  { id:'r7', name:'Marlow', venue:'rooftop', group:'The Afterparty',    base:-0.15, vol:1.6, res:0.8 },
+  { id:'r8', name:'Trix',   venue:'rooftop', group:'The Afterparty',    base: 0.45, vol:1.4, res:1.1 },
+  { id:'r9', name:'Ada',    venue:'rooftop', group:'The Quiet Smokers', base:-0.25, vol:0.7, res:1.1 },
+  { id:'r10',name:'Rook',   venue:'rooftop', group:'The Quiet Smokers', base:-0.35, vol:0.9, res:0.9 },
+  { id:'r11',name:'Sable',  venue:'rooftop', group:'The Quiet Smokers', base:-0.10, vol:0.8, res:1.2 },
 ];
 const npcDef = id => ROSTER.find(n=>n.id===id);
 const GROUPS = [...new Set(ROSTER.map(n=>n.group))];
@@ -317,6 +390,12 @@ const NPC_TRAITS = {
   m1:['sunny','steady'], m2:['volatile'], m3:['guarded','deepwell'], m4:['loner','steady'],
   m5:['openbook','resilient'], m6:['spirally','bottled'], m7:['sunny','empath'], m8:['resilient'],
   m9:['volatile','fragile'], m10:['deepwell'],
+  ch1:['sunny'], ch2:['steady','bottled'], ch3:['empath'], ch4:['volatile'],
+  ch5:['spirally','deepwell'], ch6:['bottled','loner'], ch7:['fragile','openbook'],
+  ch8:['sunny','volatile'], ch9:['resilient'], ch10:['empath','fragile'], ch11:['guarded','deepwell'],
+  r1:['steady','openbook'], r2:['loner','deepwell'], r3:['sunny'], r4:['bottled'],
+  r5:['volatile','sunny'], r6:['empath','fragile'], r7:['spirally','volatile'], r8:['deepwell'],
+  r9:['guarded','steady'], r10:['spirally','bottled'], r11:['loner','resilient'],
 };
 const hasTrait = (id,t)=>(NPC_TRAITS[id]||[]).includes(t);
 const known = id=>!!meta.known[id];
@@ -339,24 +418,13 @@ const VENUE_EVENTS = [
   { venue:'office', group:'The Managers',     n:'Bonus Rumors',    d:'The Managers smell money.', v: 0.45, i:0.30 },
   { venue:'market', group:'The Buskers',      n:'Full Moon Crowd', d:'The Buskers are feeding off the crowd.', v: 0.50, i:0.40 },
   { venue:'market', group:'The Collectors',   n:'Rare Find',       d:'A legendary piece surfaced — The Collectors are frantic.', v: 0.40, i:0.50 },
+  { venue:'chapel', group:'The Choir',        n:'Evensong',        d:'The Choir is soaring tonight.', v: 0.55, i:0.40 },
+  { venue:'chapel', group:'The Mourners',     n:'The Wake',        d:'The Mourners carry a heavy grief.', v:-0.55, i:0.45 },
+  { venue:'chapel', group:'The Wedding Party',n:'The Vows',        d:'The Wedding Party is walking on air.', v: 0.65, i:0.50 },
+  { venue:'rooftop',group:'The Afterparty',   n:'Sunrise Set',     d:'The Afterparty refuses to let the night die.', v: 0.55, i:0.45 },
+  { venue:'rooftop',group:'The Stargazers',   n:'Meteor Shower',   d:'The sky is falling beautifully for The Stargazers.', v: 0.50, i:0.50 },
+  { venue:'rooftop',group:'The Quiet Smokers',n:'Bad News',        d:'Word travels. The Quiet Smokers got some.', v:-0.50, i:0.40 },
 ];
-function rollDay(){
-  run.weather = run.day===1 ? 'clear' : WEATHERS[Math.floor(Math.random()*WEATHERS.length)].id;
-  run.event = null;
-  const pool = VENUE_EVENTS.filter(e=>run.unlocked[e.venue]);
-  if (run.day>1 && pool.length && Math.random()<0.6) {
-    const ev = pool[Math.floor(Math.random()*pool.length)];
-    run.event = { venue:ev.venue, group:ev.group, n:ev.n, d:ev.d };
-    for (const m of groupMembers(ev.group)) { const n = run.npcs[m.id];
-      if (n.state==='idle'){ n.v = clamp(n.v + ev.v, -1, 1); n.i = clamp(Math.max(n.i, Math.abs(ev.i)), 0, 1); } }
-  }
-}
-function announceDay(){
-  const w = WX();
-  toast('☀️ Day '+run.day+' — quota ✦'+quotaFor(run.day));
-  if (w.id!=='clear') toast(w.n+': '+w.d);
-  if (run.event) toast('📣 '+run.event.n+' at '+venueById(run.event.venue).name+' — '+run.event.d);
-}
 
 /* Actions. dir: valence push direction. power: valence push. gain: intensity gain.
    cost: focus. cd: cooldown s. aoe: hits whole social group. */
@@ -381,43 +449,192 @@ const SHOP = [
   { id:'sight',  kind:'upg',    price:120, name:'Aura Sight',     desc:'See exact charge % above every head.' },
   { id:'patient',kind:'upg',    price:250, name:'Patient Eye',    desc:'Peak windows last 50% longer.' },
   { id:'reson',  kind:'upg',    price:400, name:'Deep Resonance', desc:'All harvests yield +15%.' },
+  { id:'reserves',kind:'upg',   price:350, name:'Deep Reserves',  desc:'Maximum focus raised to 130.' },
   { id:'chorus', kind:'art',    price:500, name:'Art: Radiant Chorus', desc:'Active. Lift every idle soul in the venue at once. 45s cooldown.' },
   { id:'veil',   kind:'art',    price:500, name:'Art: Umbral Veil',    desc:'Active. For 12s your reputation is hidden — no push penalty, husks stop glooming. 60s cooldown.' },
 ];
 
+/* ---------------- relics: permanent rewards from hard contracts ---------------- */
+const RELICS = [
+  { id:'prism',     icon:'🔮', n:'Aura Prism',       d:'The feeling above every charged head is visible as its true essence.' },
+  { id:'hourglass', icon:'⏳', n:'Cracked Hourglass', d:'Every day lasts 15 seconds longer.' },
+  { id:'bell',      icon:'🔔', n:'Peal Bell',         d:'Peak windows last 20% longer.' },
+  { id:'locket',    icon:'🧿', n:'Velvet Locket',     d:'Souls recover from Radiance harvests 25% faster.' },
+  { id:'lantern',   icon:'🏮', n:'Dawn Lantern',      d:'Focus regenerates 25% faster.' },
+  { id:'thorn',     icon:'🌹', n:'Thorn Crown',       d:'Blight drains yield +20%.' },
+  { id:'quill',     icon:'🪶', n:'Broker’s Quill',    d:'Contract payouts are doubled.' },
+  { id:'mirror',    icon:'🪞', n:'Gray Mirror',       d:'Mara siphons 40% slower.' },
+];
+const relic = id => !!(meta.relics && meta.relics[id]);
+const nextRelic = () => RELICS.find(r=>!meta.relics[r.id]);
+
+/* ---------------- milestones ---------------- */
+const MILESTONES = [
+  { id:'awe1',   n:'Struck by Awe',        d:'Capture Awe essence for the first time.' },
+  { id:'dread1', n:'Into the Web',         d:'Capture Dread essence for the first time.' },
+  { id:'combo5', n:'Chain Lightning',      d:'Reach a ×5 peak combo.' },
+  { id:'rich',   n:'Golden Dusk',          d:'Harvest 1,000✦ in a single day.' },
+  { id:'reader', n:'People Person',        d:'Learn the traits of 20 souls.' },
+  { id:'case30', n:'Curator',              d:'Keep 30 specimens in the case.' },
+  { id:'caseall',n:'The Full Gallery',     d:'Keep a specimen of every soul.' },
+  { id:'relics', n:'The Broker’s Favorite',d:'Earn all 8 relics.' },
+  { id:'finish', n:'Fourteen Dusks',       d:'Survive all 14 days.' },
+  { id:'shoo5',  n:'Territorial',          d:'Drive Mara off 5 times.' },
+];
+function mile(id){
+  if (meta.mile[id]) return;
+  meta.mile[id] = 1; saveMeta();
+  const m = MILESTONES.find(x=>x.id===id);
+  if (m) { toast('🏆 '+m.n+' — '+m.d); sfx.buy(); }
+}
+
 /* ---------------- persistent meta ---------------- */
-let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[] };
+let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[], relics:{}, mile:{}, maraShoos:0 };
 try { const m = localStorage.getItem('auraFarmMeta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch(e) {}
+if (!meta.relics) meta.relics = {};
+if (!meta.mile) meta.mile = {};
+if (!meta.maraShoos) meta.maraShoos = 0;
 function saveMeta(){ try { localStorage.setItem('auraFarmMeta', JSON.stringify(meta)); } catch(e) {} }
 
 /* ---------------- run state ---------------- */
 let run = null;
+const dayLenFor = ()=> DAY_LEN + (relic('hourglass')?15:0);
+const focusCap = ()=> (run && run.upgrades.reserves) ? 130 : 100;
+const emoZero = ()=>({ joy:0, hope:0, awe:0, sorrow:0, rage:0, dread:0 });
 function newRun(){
   const npcs = {};
   for (const d of ROSTER) npcs[d.id] = freshNpc(d);
-  return { day:1, dayT:DAY_LEN, dayEarned:0, essence:0, rad:0, bli:0, focus:100,
+  const zones = {};
+  for (const v of VENUES) zones[v.id] = { total:0, rad:0, bli:0, bloomed:null };
+  const unlocked = {};
+  for (const v of VENUES) unlocked[v.id] = v.id==='park';
+  return { day:1, dayLen:dayLenFor(), dayT:dayLenFor(), dayEarned:0, essence:0, rad:0, bli:0, focus:100,
     venue:'park', harvests:0, npcs,
-    dayRad:0, dayBli:0, dayBest:null, combo:0, lastSign:0, history:[], qMet:false,
+    dayRad:0, dayBli:0, dayBest:null, combo:0, maxCombo:0, lastSign:0, history:[], qMet:false,
     weather:'clear', event:null, veilT:0, arts:{}, artCd:{},
-    zones:{ park:{total:0,rad:0,bli:0,bloomed:null}, club:{total:0,rad:0,bli:0,bloomed:null}, office:{total:0,rad:0,bli:0,bloomed:null}, market:{total:0,rad:0,bli:0,bloomed:null} },
-    unlocked:{ park:true, club:false, office:false, market:false },
+    essBy:emoZero(), dayEss:emoZero(), dayDistinct:{}, dayPeakN:0,
+    contracts:[], contractsDone:0, dayContractsDone:0,
+    mara:null, stolen:0, dayStolen:0,
+    zones, unlocked,
     owned:{ hype:true, snide:true }, upgrades:{} };
 }
 function freshNpc(d){
   return { v:clamp(d.base + rnd(-0.15,0.15), -1, 1), i:rnd(0.03,0.12), state:'idle',
     recoverT:0, peak:0, peakDur:0, momentum:1, lastDir:0, eventT:rnd(4,18), festerT:0, seen:0,
-    x:0, y:0, tx:0, ty:0, moveT:0, placed:false, bob:rnd(0,6.28) };
+    x:0, y:0, tx:0, ty:0, moveT:0, placed:false, bob:rnd(0,6.28), moving:false, face:1 };
 }
 function migrateRun(r){ // fill fields missing from older saves
-  const fresh = { dayRad:0, dayBli:0, dayBest:null, combo:0, lastSign:0, history:[], qMet:false, weather:'clear', event:null, veilT:0, arts:{}, artCd:{} };
+  const fresh = { dayRad:0, dayBli:0, dayBest:null, combo:0, maxCombo:0, lastSign:0, history:[], qMet:false,
+    weather:'clear', event:null, veilT:0, arts:{}, artCd:{},
+    essBy:emoZero(), dayEss:emoZero(), dayDistinct:{}, dayPeakN:0,
+    contracts:[], contractsDone:0, dayContractsDone:0, mara:null, stolen:0, dayStolen:0, dayLen:dayLenFor() };
   for (const k in fresh) if (r[k]===undefined) r[k] = fresh[k];
-  if (!r.zones.market) r.zones.market = { total:0, rad:0, bli:0, bloomed:null };
-  if (r.unlocked.market===undefined) r.unlocked.market = false;
-  for (const d of ROSTER) { if (!r.npcs[d.id]) r.npcs[d.id] = freshNpc(d); if (r.npcs[d.id].seen===undefined) r.npcs[d.id].seen = 0; }
+  for (const v of VENUES) {
+    if (!r.zones[v.id]) r.zones[v.id] = { total:0, rad:0, bli:0, bloomed:null };
+    if (r.unlocked[v.id]===undefined) r.unlocked[v.id] = false;
+  }
+  for (const d of ROSTER) {
+    if (!r.npcs[d.id]) r.npcs[d.id] = freshNpc(d);
+    const n = r.npcs[d.id];
+    if (n.seen===undefined) n.seen = 0;
+    if (n.moving===undefined) { n.moving = false; n.face = 1; }
+  }
+  if (!r.contracts.length) genContracts(r);
   return r;
 }
 function saveRun(){ try { if (run) localStorage.setItem('auraFarmRun', JSON.stringify(run)); else localStorage.removeItem('auraFarmRun'); } catch(e) {} }
 function loadRun(){ try { const r = localStorage.getItem('auraFarmRun'); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+
+/* ---------------- Broker contracts ---------------- */
+function genContracts(r){
+  r = r || run;
+  const d = r.day;
+  const mk = (o)=>Object.assign({ prog:0, done:false }, o);
+  const easyPool = [
+    ()=>{ const n = 3+Math.floor(d/4); return mk({ k:'rad', n, icon:'☀️', label:'Make '+n+' Radiance harvests', reward:50+12*d }); },
+    ()=>{ const n = 4+Math.floor(d/3); return mk({ k:'distinct', n, icon:'👥', label:'Harvest '+n+' different souls', reward:50+12*d }); },
+    ()=>{ const n = 2+Math.floor(d/4); return mk({ k:'peak', n, icon:'⚡', label:'Make '+n+' peak-window harvests', reward:55+13*d }); },
+  ];
+  const medPool = [
+    ()=>{ const emo = pick(['joy','hope','sorrow','rage']); const amt = 50+16*d;
+      return mk({ k:'ess', emo, amt, icon:EMOTIONS[emo].icon, label:'Deliver '+amt+'✦ of '+EMOTIONS[emo].n, reward:110+22*d }); },
+    ()=>mk({ k:'combo', n:3, icon:'🔗', label:'Reach a ×3 peak combo', reward:110+22*d }),
+    ()=>mk({ k:'tier', minI:0.75, n:1, icon:'🌟', label:'Capture a Brilliant harvest (≥75% charge)', reward:110+22*d }),
+  ];
+  const hardPool = [
+    ()=>mk({ k:'tier', minI:0.92, n:1, icon:'💎', label:'Capture a Transcendent harvest (≥92% charge)', reward:220+45*d, hard:true }),
+    ()=>{ const n = d>=6?5:4; return mk({ k:'combo', n, icon:'⛓️', label:'Reach a ×'+n+' peak combo', reward:220+45*d, hard:true }); },
+  ];
+  if (d>=3) hardPool.push(()=>{ const emo = pick(['awe','dread']); const amt = 30+9*d;
+    return mk({ k:'ess', emo, amt, icon:EMOTIONS[emo].icon, label:'Deliver '+amt+'✦ of pure '+EMOTIONS[emo].n, reward:200+40*d, hard:true }); });
+  if (d>=4) hardPool.push(()=>{ const n = 2+Math.floor(d/4);
+    return mk({ k:'bli', n, icon:'🥀', label:'Make '+n+' Blight drains', reward:200+40*d, hard:true }); });
+  const hard = pick(hardPool)();
+  if (nextRelic()) hard.givesRelic = true;
+  r.contracts = [ pick(easyPool)(), pick(medPool)(), hard ];
+  r.dayContractsDone = 0;
+}
+function contractGoal(c){ return c.amt || c.n; }
+function cprog(ev){
+  if (!run || !run.contracts) return;
+  let changed = false;
+  for (const c of run.contracts) {
+    if (c.done) continue;
+    const before = c.prog;
+    if (ev.type==='harvest') {
+      if (c.k==='rad' && ev.sign>0) c.prog++;
+      if (c.k==='bli' && ev.sign<0) c.prog++;
+      if (c.k==='peak' && ev.onPeak) c.prog++;
+      if (c.k==='distinct') c.prog = Object.keys(run.dayDistinct).length;
+      if (c.k==='ess' && ev.emo===c.emo) c.prog += ev.amt;
+      if (c.k==='tier' && ev.i>=c.minI) c.prog++;
+    } else if (ev.type==='combo' && c.k==='combo') c.prog = Math.max(c.prog, ev.n);
+    if (c.prog !== before) changed = true;
+    if (c.prog >= contractGoal(c)) { completeContract(c); changed = true; }
+  }
+  if (changed) renderContractPills();
+}
+function completeContract(c){
+  c.done = true; c.prog = contractGoal(c);
+  const pay = c.reward * (relic('quill')?2:1);
+  run.essence += pay; run.contractsDone++; run.dayContractsDone++;
+  sfx.buy();
+  toast('📜 Contract fulfilled: '+c.label+' — +'+pay+'✦');
+  if (c.givesRelic) awardRelic();
+  updateHud();
+}
+function awardRelic(){
+  const r = nextRelic();
+  if (!r) { run.essence += 300; toast('The Broker has no relics left to give. +300✦ instead.'); return; }
+  meta.relics[r.id] = 1; saveMeta();
+  banner('RELIC EARNED', '<span class="sub2">'+r.icon+' '+r.n.toUpperCase()+'</span>', '#9ef3ff');
+  toast(r.icon+' '+r.n+': '+r.d+' (yours forever)');
+  sfx.peak();
+  if (!nextRelic()) mile('relics');
+}
+
+/* ---------------- daily setup ---------------- */
+function rollDay(){
+  run.weather = run.day===1 ? 'clear' : WEATHERS[Math.floor(Math.random()*WEATHERS.length)].id;
+  run.event = null;
+  const pool = VENUE_EVENTS.filter(e=>run.unlocked[e.venue]);
+  if (run.day>1 && pool.length && Math.random()<0.6) {
+    const ev = pool[Math.floor(Math.random()*pool.length)];
+    run.event = { venue:ev.venue, group:ev.group, n:ev.n, d:ev.d };
+    for (const m of groupMembers(ev.group)) { const n = run.npcs[m.id];
+      if (n.state==='idle'){ n.v = clamp(n.v + ev.v, -1, 1); n.i = clamp(Math.max(n.i, Math.abs(ev.i)), 0, 1); } }
+  }
+  genContracts(run);
+  renderContractPills();
+}
+function announceDay(){
+  const w = WX();
+  toast('☀️ Day '+run.day+' — quota ✦'+quotaFor(run.day));
+  if (w.id!=='clear') toast(w.n+': '+w.d);
+  if (run.event) toast('📣 '+run.event.n+' at '+venueById(run.event.venue).name+' — '+run.event.d);
+  toast('📜 3 fresh contracts from the Broker.');
+  if (run.day===3) toast('🩶 The Broker has sent Mara the Gray to work your venues. She siphons what you leave ripening — tap her to flare her off.');
+}
 
 /* ---------------- audio ---------------- */
 let AC = null, masterG = null;
@@ -438,7 +655,7 @@ function beep(freq, dur, type, vol, when){
 }
 /* quiet ambient pad per venue */
 let padNodes = null;
-const PAD_CHORDS = { park:[220,329.6], club:[146.8,220.0], office:[164.8,246.9], market:[196.0,293.7] };
+const PAD_CHORDS = { park:[220,329.6], club:[146.8,220.0], office:[164.8,246.9], market:[196.0,293.7], chapel:[174.6,261.6], rooftop:[130.8,196.0] };
 function startAmbient(venueId){
   const c = ac(); if (!c) return;
   stopAmbient();
@@ -470,6 +687,7 @@ const sfx = {
   day: ()=>{ beep(523,0.15,'sine',0.07); beep(659,0.15,'sine',0.07,0.12); beep(784,0.3,'sine',0.07,0.24); },
   heartbeat: ()=>{ beep(55,0.09,'sine',0.16); beep(50,0.12,'sine',0.14,0.16); },
   tick: ()=>beep(1200,0.03,'square',0.04),
+  shoo: ()=>{ beep(180,0.18,'sawtooth',0.07); beep(90,0.28,'sawtooth',0.06,0.1); },
 };
 function toggleSound(){ meta.muted = !meta.muted; if (masterG) masterG.gain.value = meta.muted?0:1; $('sndBtn').textContent = meta.muted?'🔇':'🔊'; saveMeta(); }
 
@@ -482,23 +700,26 @@ function resize(){
   W = window.innerWidth; H = window.innerHeight;
   cv.width = W*DPR; cv.height = H*DPR; cv.style.width = W+'px'; cv.style.height = H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  if (run && ow && oh) for (const id in run.npcs) { const n = run.npcs[id];
-    n.x *= W/ow; n.y *= H/oh; n.tx *= W/ow; n.ty *= H/oh; }
+  if (run && ow && oh) {
+    for (const id in run.npcs) { const n = run.npcs[id];
+      n.x *= W/ow; n.y *= H/oh; n.tx *= W/ow; n.ty *= H/oh; }
+    if (run.mara) { run.mara.x *= W/ow; run.mara.y *= H/oh; run.mara.tx *= W/ow; run.mara.ty *= H/oh; }
+  }
 }
 window.addEventListener('resize', resize); resize();
-const playTop = ()=>96, playBot = ()=>H-190;
+const playTop = ()=>120, playBot = ()=>H-190;
 
 /* ---------------- game flow ---------------- */
 let mode = 'title';        // title | play | over | ending
 let modalOpen = false;
 let selected = null;       // npc id
 let particles = [];
+let ambientP = [];         // set-dressing drifters: fireflies, petals, embers, motes
 let cooldowns = {};        // actionId -> seconds left
-let toastTimes = [];
 
 function startGame(fresh){
   run = fresh ? newRun() : migrateRun(loadRun() || newRun());
-  selected = null; cooldowns = {}; particles = [];
+  selected = null; cooldowns = {}; particles = []; ambientP = [];
   mode = 'play'; closeModal();
   $('hud').style.display = 'flex'; $('menuBtns').style.display = 'flex';
   $('sndBtn').textContent = meta.muted?'🔇':'🔊';
@@ -506,6 +727,7 @@ function startGame(fresh){
   if (fresh) { rollDay(); banner('DAY 1', '<span class="sub2">QUOTA ✦'+quotaFor(1)+' BEFORE DUSK</span>');
     toast('Tap someone to read their aura.');
     setTimeout(()=>{ if(mode==='play') toast('Fill their CHARGE into the striped peak zone, then harvest.'); }, 4000); }
+  renderContractPills();
   updateHud();
 }
 
@@ -539,6 +761,7 @@ function yieldMult(sign, zone){
   const z = run.zones[zone];
   if (z.bloomed==='blight' && sign<0) m *= 1.25;
   if (z.bloomed==='turb') m *= 1.10;
+  if (sign<0 && relic('thorn')) m *= 1.2;
   return m;
 }
 function repMod(dir){
@@ -553,6 +776,7 @@ function trackSeen(id, amt){
   if (!meta.known[id] && n.seen >= 4 && (NPC_TRAITS[id]||[]).length) {
     meta.known[id] = 1; saveMeta();
     toast('🔍 You’ve read '+npcDef(id).name+': '+NPC_TRAITS[id].map(t=>TRAITS[t].n).join(' + '));
+    if (Object.keys(meta.known).length >= 20) mile('reader');
     if (selected===id) renderPanel();
   }
 }
@@ -577,10 +801,11 @@ function moodText(n){
 function updateMeters(n){
   $('moodMarker').style.left = ((clamp(n.v,-1,1)+1)/2*100)+'%';
   const cf = $('chargeFill');
+  const emo = EMOTIONS[emotionOf(n.v, n.i)];
   cf.style.width = Math.round(n.i*100)+'%';
-  cf.classList.toggle('neg', n.v<0);
+  cf.style.background = 'linear-gradient(90deg, rgba('+emo.rgb+',.35), '+emo.c+')';
   cf.classList.toggle('peaking', n.peak>0);
-  $('chargeTxt').textContent = n.state==='husk' ? 'DRAINED' : Math.round(n.i*100)+'%';
+  $('chargeTxt').textContent = n.state==='husk' ? 'DRAINED' : emo.icon+' '+Math.round(n.i*100)+'%';
   const pb = $('peakBadge');
   if (n.peak>0 && n.state==='idle'){ pb.style.display='inline-block'; pb.textContent = '⚡ PEAK '+Math.ceil(n.peak)+'s'; }
   else pb.style.display='none';
@@ -642,31 +867,51 @@ function harvest(){
   if (onPeak) run.combo = (run.combo>0 && run.lastSign!==sign) ? 1 : run.combo+1;
   else run.combo = 0;
   run.lastSign = sign;
+  run.maxCombo = Math.max(run.maxCombo, run.combo);
+  if (run.combo >= 5) mile('combo5');
   const comboMult = 1 + Math.min(0.4, Math.max(0, run.combo-1)*0.08);
 
-  let amt = Math.round(n.i * 100 * (sign<0 ? 1.6 : 1.0) * yieldMult(sign, def.venue) * comboMult);
+  const emo = emotionOf(n.v, n.i);
+  const emoMult = EMOTIONS[emo].rare ? 1.35 : 1;
+  let amt = Math.round(n.i * 100 * (sign<0 ? 1.6 : 1.0) * yieldMult(sign, def.venue) * comboMult * emoMult);
   if (hasTrait(def.id,'deepwell')) amt = Math.round(amt*1.2);
   run.essence += amt; run.dayEarned += amt; run.harvests++;
+  run.essBy[emo] += amt; run.dayEss[emo] += amt;
+  run.dayDistinct[def.id] = 1;
+  if (onPeak) run.dayPeakN++;
+  if (emo==='awe') mile('awe1');
+  if (emo==='dread') mile('dread1');
+  if (run.dayEarned >= 1000) mile('rich');
   if (sign>0) { run.rad += amt; run.dayRad += amt; } else { run.bli += amt; run.dayBli += amt; }
-  if (!run.dayBest || n.i > run.dayBest.i) run.dayBest = { name:def.name, i:+n.i.toFixed(3) };
+  if (!run.dayBest || n.i > run.dayBest.i) run.dayBest = { name:def.name, i:+n.i.toFixed(3), emo };
   if (run.combo>=2) floatText(n.x, n.y-56, 'COMBO ×'+run.combo, '#8effc1');
   const z = run.zones[def.venue]; z.total += amt; if (sign>0) z.rad += amt; else z.bli += amt;
+
+  // Mara loses interest in a soul you just harvested
+  if (run.mara && run.mara.target===def.id) { run.mara.target = null; run.mara.cd = 4; }
 
   // specimen
   const t = tierOf(n.i);
   const prev = meta.case[def.id];
   if (!prev || n.i > prev.i) {
     const setsBefore = setsDone();
-    meta.case[def.id] = { i:+n.i.toFixed(3), tier:t.name, type:sign>0?'radiance':'blight' };
+    meta.case[def.id] = { i:+n.i.toFixed(3), tier:t.name, type:sign>0?'radiance':'blight', emo };
     saveMeta();
     showSpecCard(t, def, Math.round(n.i*100), !!prev);
+    const kept = Object.keys(meta.case).length;
+    if (kept >= 30) mile('case30');
+    if (kept >= ROSTER.length) mile('caseall');
     if (setsDone() > setsBefore) { banner('SET COMPLETE','<span class="sub2">'+def.group.toUpperCase()+' — +5% ALL YIELDS, FOREVER</span>','#8effc1'); sfx.buy(); }
   }
 
-  burst(n.x, n.y, sign>0?'#ffd75e':'#c79bff', Math.round(10+n.i*22));
-  floatText(n.x, n.y-34, '+'+amt+' ✦', sign>0?'#ffd75e':'#c79bff');
-  if (sign>0) { sfx.harvR(); flashFx('rgba(255,215,94,.4)');
-    n.state='recover'; n.recoverT = 28/def.res * (hasTrait(def.id,'resilient')?0.5:1); n.i = 0; n.v *= 0.5; n.peak = 0; }
+  cprog({ type:'harvest', emo, amt, sign, onPeak, i:n.i });
+  cprog({ type:'combo', n:run.combo });
+
+  burst(n.x, n.y, EMOTIONS[emo].c, Math.round(10+n.i*22));
+  essStream(n.x, n.y, EMOTIONS[emo].c, Math.round(6+n.i*10));
+  floatText(n.x, n.y-34, '+'+amt+' '+EMOTIONS[emo].icon, EMOTIONS[emo].c);
+  if (sign>0) { sfx.harvR(); flashFx('rgba('+EMOTIONS[emo].rgb+',.35)');
+    n.state='recover'; n.recoverT = 28/def.res * (hasTrait(def.id,'resilient')?0.5:1) * (relic('locket')?0.75:1); n.i = 0; n.v *= 0.5; n.peak = 0; }
   else { sfx.harvB(); flashFx('rgba(110,30,170,.5)'); shakeFx();
     n.state='husk'; n.i = 0; n.peak = 0; toast(def.name+' goes quiet. They won’t feel again this run.'); }
 
@@ -689,10 +934,82 @@ function checkBloom(vid){
   }
 }
 
+/* ---------------- Mara the Gray: the Broker's other harvester ---------------- */
+function moveToward(o, tx, ty, step){
+  const dx = tx-o.x, dy = ty-o.y, dist = Math.hypot(dx,dy);
+  if (dist < 2) return true;
+  o.x += dx/dist*Math.min(step,dist); o.y += dy/dist*Math.min(step,dist);
+  return dist < 6;
+}
+function ensureMara(){
+  if (run.day < 3) { run.mara = null; return; }
+  if (!run.mara) run.mara = { x:W*0.92, y:playTop()+40, tx:W*0.5, ty:(playTop()+playBot())/2, stunT:0, target:null, siphonT:0, cd:3, wanderT:0 };
+}
+function updateMara(dt){
+  ensureMara();
+  const m = run.mara; if (!m) return;
+  if (m.stunT > 0) {
+    m.stunT -= dt; m.target = null;
+    moveToward(m, W-70, playTop()+50, 70*dt);
+    return;
+  }
+  if (m.cd > 0) m.cd -= dt;
+  // validate target
+  if (m.target) {
+    const n = run.npcs[m.target], d = npcDef(m.target);
+    if (!n || n.state!=='idle' || d.venue!==run.venue || n.i < 0.1) { m.target = null; m.siphonT = 0; }
+  }
+  // acquire: the juiciest idle aura you haven't claimed
+  if (!m.target && m.cd <= 0) {
+    let best = null, bi = 0.35;
+    for (const d of ROSTER) {
+      if (d.venue!==run.venue) continue;
+      const n = run.npcs[d.id];
+      if (n.state==='idle' && n.i > bi && d.id!==selected) { bi = n.i; best = d.id; }
+    }
+    m.target = best; m.siphonT = 0;
+  }
+  if (m.target) {
+    const n = run.npcs[m.target];
+    const dist = Math.hypot(n.x-m.x, n.y-m.y);
+    if (dist > 48) moveToward(m, n.x+26, n.y-6, 44*dt);
+    else {
+      m.siphonT += dt;
+      const rate = 0.055 * (relic('mirror')?0.6:1);
+      const take = Math.min(Math.max(0, n.i-0.08), rate*dt);
+      if (take > 0) {
+        n.i -= take;
+        run.stolen += take*100; run.dayStolen += take*100;
+        if (Math.random() < dt*2.5) siphonWisp(n.x, n.y-14, m.x, m.y-10);
+      }
+      if (n.i <= 0.1) {
+        if (Math.random()<0.5) toast('🩶 Mara drinks '+npcDef(m.target).name+'’s aura down to embers.');
+        m.target = null; m.cd = 8; m.siphonT = 0;
+      }
+    }
+  } else {
+    // drift moodily around the venue
+    m.wanderT -= dt;
+    if (m.wanderT <= 0) { m.wanderT = rnd(3,6);
+      m.tx = rnd(W*0.15, W*0.85); m.ty = rnd(playTop()+40, playBot()-20); }
+    moveToward(m, m.tx, m.ty, 26*dt);
+  }
+}
+function shooMara(){
+  const m = run.mara; if (!m || m.stunT>0) return;
+  if (run.focus < 15) { toast('Too drained to flare your aura (needs 15 focus).'); return; }
+  run.focus -= 15;
+  m.stunT = 12; m.target = null; m.siphonT = 0;
+  meta.maraShoos = (meta.maraShoos||0)+1; saveMeta();
+  if (meta.maraShoos >= 5) mile('shoo5');
+  sfx.shoo(); burst(m.x, m.y, '#cfd2ff', 14);
+  toast('You flare your aura. Mara hisses and backs off — 12s.');
+}
+
 /* ---------------- simulation ---------------- */
 function update(dt){
   if (mode!=='play' || modalOpen) return;
-  run.focus = clamp(run.focus + 6*dt, 0, 100);
+  run.focus = clamp(run.focus + 6*(relic('lantern')?1.25:1)*dt, 0, focusCap());
   for (const k in cooldowns) cooldowns[k] = Math.max(0, cooldowns[k]-dt);
   run.veilT = Math.max(0, run.veilT - dt);
   for (const k in run.artCd) run.artCd[k] = Math.max(0, run.artCd[k]-dt);
@@ -709,11 +1026,15 @@ function update(dt){
   run.dayT -= dt;
   if (run.dayT <= 0) return endDay();
 
+  updateMara(dt);
+
   const cur = run.venue;
+  const vdCur = venueById(cur);
   const huskList = [];
   for (const d of ROSTER) { const n = run.npcs[d.id];
     if (n.state==='husk' && d.venue===cur) huskList.push({ x:n.x, y:n.y, r:hasTrait(d.id,'fragile')?220:110 }); }
 
+  const dp = 1 - run.dayT/run.dayLen;
   for (const d of ROSTER) {
     const n = run.npcs[d.id];
     const inCur = d.venue === cur;
@@ -726,10 +1047,13 @@ function update(dt){
     if (n.state==='husk') { if (inCur) wander(n, d, dt, 0.35); continue; }
     if (!inCur) { n.v += (d.base - n.v)*0.01*dt; n.i = Math.max(0.05, n.i - 0.004*dt); continue; }
 
-    const vd = venueById(d.venue), z = run.zones[d.venue];
-    // drift toward baseline + ambiance + daily weather (the market's mood swings like a pendulum)
+    const vd = vdCur, z = run.zones[d.venue];
+    // drift toward baseline + ambiance + daily weather
+    // the market's mood swings like a pendulum; the chapel starts in wedding light and sinks toward the wake
     const driftMult = n.festerT>0 ? 0.25 : 1;
-    const amb = vd.ambient + (vd.id==='market' ? 0.15*Math.sin((DAY_LEN-run.dayT)/12) : 0);
+    let amb = vd.ambient;
+    if (vd.id==='market') amb += 0.15*Math.sin((run.dayLen-run.dayT)/12);
+    if (vd.id==='chapel') amb += 0.30*Math.cos(Math.PI*dp);
     let target = d.base + amb + (WX().drift||0) + (z.bloomed==='bloom'?0.12:0) + (z.bloomed==='blight'?-0.12:0);
     n.v += (clamp(target,-1,1) - n.v)*0.018*dt*driftMult;
     if (n.festerT>0) n.festerT -= dt;
@@ -770,7 +1094,7 @@ function update(dt){
         if (selected===d.id) renderPanel();
       }
     } else if (n.i >= 0.75) {
-      n.peakDur = Math.max(2.5, ((n.v>=0 ? 12 : 5) - (hasTrait(d.id,'bottled')?1.5:0)) * (run.upgrades.patient?1.5:1));
+      n.peakDur = Math.max(2.5, ((n.v>=0 ? 12 : 5) - (hasTrait(d.id,'bottled')?1.5:0)) * (run.upgrades.patient?1.5:1) * (relic('bell')?1.2:1));
       n.peak = n.peakDur;
       sfx.peak(); puff(n.x, n.y-26, '#fff', 10);
       if (selected===d.id) renderPanel();
@@ -808,10 +1132,23 @@ function wander(n, d, dt, speedMult){
     n.ty = clamp(ay + rnd(-65,65), playTop()+28, playBot()-8);
   }
   const dx = n.tx-n.x, dy = n.ty-n.y, dist = Math.hypot(dx,dy);
-  if (dist > 2) { const sp = 16*speedMult; n.x += dx/dist*sp*dt; n.y += dy/dist*sp*dt; }
+  if (dist > 2) {
+    const sp = 16*speedMult; n.x += dx/dist*sp*dt; n.y += dy/dist*sp*dt;
+    n.moving = true; if (Math.abs(dx) > 0.5) n.face = dx>0?1:-1;
+  } else n.moving = false;
 }
 
 /* ---------------- day / run flow ---------------- */
+function essBars(src){
+  let html = '';
+  const max = Math.max(1, ...EMO_KEYS.map(k=>src[k]||0));
+  for (const k of EMO_KEYS) {
+    const v = src[k]||0; if (!v) continue;
+    const e = EMOTIONS[k];
+    html += '<div class="essRow"><span class="el">'+e.icon+' '+e.n+'</span><div class="eb"><div class="ebf" style="width:'+Math.round(100*v/max)+'%;background:'+e.c+'"></div></div><span class="ev">✦'+v+'</span></div>';
+  }
+  return html || '<div class="sub">Nothing harvested.</div>';
+}
 function endDay(){
   const met = run.dayEarned >= quotaFor(run.day);
   if (!met) { sfx.fail(); return gameOver(); }
@@ -824,16 +1161,20 @@ function endDay(){
     <div class="sub">Quota met. The farm endures.</div>
     <div class="statline"><span>Harvested today</span><b>✦ ${run.dayEarned}</b></div>
     <div class="statline"><span>Quota</span><b>✦ ${quotaFor(run.day)}</b></div>
-    ${run.dayBest?`<div class="statline"><span>Finest capture</span><b>${run.dayBest.name} · ${Math.round(run.dayBest.i*100)}%</b></div>`:''}
+    <div class="statline"><span>Contracts fulfilled</span><b>${run.dayContractsDone} / 3</b></div>
+    ${run.dayBest?`<div class="statline"><span>Finest capture</span><b>${run.dayBest.name} · ${Math.round(run.dayBest.i*100)}% ${run.dayBest.emo?EMOTIONS[run.dayBest.emo].icon:''}</b></div>`:''}
+    ${run.dayStolen>=1?`<div class="statline"><span>Siphoned away by Mara</span><b style="color:#9aa">✦ ${Math.round(run.dayStolen)}</b></div>`:''}
     <div class="statline"><span>Husks left behind</span><b>${husks}</b></div>
     <div class="statline"><span>Tomorrow’s quota</span><b>✦ ${quotaFor(run.day+1)}</b></div>
     <div class="statline"><span>Balance</span><b style="color:#ffd75e">✦ ${run.essence}</b></div>
+    <h3>Today’s essences</h3>${essBars(run.dayEss)}
     <button class="big" onclick="nextDay()">Begin Day ${run.day+1} ➜</button>
   `, true, true);
 }
 function nextDay(){
-  run.day++; run.dayT = DAY_LEN; run.dayEarned = 0; run.focus = 100;
+  run.day++; run.dayLen = dayLenFor(); run.dayT = run.dayLen; run.dayEarned = 0; run.focus = focusCap();
   run.dayRad = 0; run.dayBli = 0; run.dayBest = null; run.combo = 0; run.qMet = false;
+  run.dayEss = emoZero(); run.dayDistinct = {}; run.dayPeakN = 0; run.dayStolen = 0;
   banner('DAY '+run.day, '<span class="sub2">QUOTA ✦'+quotaFor(run.day)+' BEFORE DUSK</span>');
   for (const d of ROSTER) { const n = run.npcs[d.id];
     if (n.state==='recover') { n.recoverT = Math.max(0, n.recoverT - 20); if (n.recoverT<=0){ n.state='idle'; n.i=0.05; } } }
@@ -850,15 +1191,23 @@ function gameOver(){
     <div class="statline"><span>Days survived</span><b>${run.day}</b></div>
     <div class="statline"><span>Total harvested</span><b>✦ ${run.rad+run.bli}</b></div>
     <div class="statline"><span>Radiance purity</span><b>${p}%</b></div>
+    <div class="statline"><span>Contracts fulfilled</span><b>${run.contractsDone}</b></div>
+    ${run.stolen>=1?`<div class="statline"><span>Stolen by Mara</span><b style="color:#9aa">✦ ${Math.round(run.stolen)}</b></div>`:''}
     <div class="statline"><span>Specimens kept</span><b>${Object.keys(meta.case).length} / ${ROSTER.length}</b></div>
-    <div class="sub" style="margin-top:10px">Your specimen case survives. Every set bonus carries into the next run.</div>
+    <h3>Run essences</h3>${essBars(run.essBy)}
+    <div class="sub" style="margin-top:10px">Your specimen case, relics, and everything you’ve learned survive. Every set bonus carries into the next run.</div>
     <button class="big" onclick="restart()">Farm Again</button>
     <button class="big ghost" onclick="toTitle()">Title</button>
   `, true);
   run = null; saveRun(); stopAmbient();
 }
+const EMO_EPITHETS = {
+  joy:'The Joysmith', hope:'The Gardener', awe:'The Stargazer',
+  sorrow:'The Rain Collector', rage:'The Storm-Tongue', dread:'The Night Shepherd',
+};
 function ending(){
   mode = 'ending';
+  mile('finish');
   const total = run.rad + run.bli;
   const p = run.rad / Math.max(1,total);
   const pct = Math.round(p*100);
@@ -866,9 +1215,13 @@ function ending(){
   if (p >= 0.85) { title = '🌞 The Luminary'; line = 'You farmed light and left every field brighter than you found it. The auras will feed you forever.'; }
   else if (p <= 0.15) { title = '🥀 The Reaper of Vibes'; line = 'You drank deep and left husks in your wake. A magnificent, terrible harvest — and a silent farm.'; }
   else { title = '⚖️ The Gray Broker'; line = 'Light when it paid, blight when it didn’t. The farm neither blooms nor dies. It waits.'; }
+  let domEmo = null, domV = 0;
+  for (const k of EMO_KEYS) if (run.essBy[k] > domV) { domV = run.essBy[k]; domEmo = k; }
+  const emoLine = domEmo ? `<div class="sub">Dominant essence: <b style="color:${EMOTIONS[domEmo].c}">${EMOTIONS[domEmo].icon} ${EMOTIONS[domEmo].n}</b> — the trade knows you as <b>${EMO_EPITHETS[domEmo]}</b>.</div>` : '';
   const specs = Object.values(meta.case);
   const avgI = specs.length ? specs.reduce((s,x)=>s+x.i,0)/specs.length : 0;
-  const grade = specs.length>=38&&avgI>=0.8?'S':specs.length>=28&&avgI>=0.65?'A':specs.length>=18&&avgI>=0.5?'B':'C';
+  const frac = specs.length/ROSTER.length;
+  const grade = frac>=0.82&&avgI>=0.8?'S':frac>=0.6&&avgI>=0.65?'A':frac>=0.38&&avgI>=0.5?'B':'C';
   if (!meta.endings.includes(title)) meta.endings.push(title);
   meta.bestPurity = pct; saveMeta();
   const husks = ROSTER.filter(d=>run.npcs[d.id].state==='husk').length;
@@ -878,11 +1231,16 @@ function ending(){
   showModal(`
     <h2>${title}</h2>
     <div class="sub">${line}</div>
+    ${emoLine}
     <div class="statline"><span>Radiance purity</span><b>${pct}%</b></div>
     <div class="statline"><span>Lifetime harvest</span><b>✦ ${total}</b></div>
     <div class="statline"><span>Souls husked</span><b>${husks}</b></div>
+    <div class="statline"><span>Contracts fulfilled</span><b>${run.contractsDone}</b></div>
+    ${run.stolen>=1?`<div class="statline"><span>Stolen by Mara</span><b style="color:#9aa">✦ ${Math.round(run.stolen)}</b></div>`:''}
+    <div class="statline"><span>Relics earned</span><b>${Object.keys(meta.relics).length} / ${RELICS.length}</b></div>
     <div class="statline"><span>Specimen case</span><b>${specs.length}/${ROSTER.length} · avg ${(avgI*100)|0}% · grade ${grade}</b></div>
     <div class="statline"><span>Sets completed</span><b>${setsDone()} / ${GROUPS.length}</b></div>
+    <h3>Run essences</h3>${essBars(run.essBy)}
     <h3>How each day was farmed</h3>${bars}
     <button class="big" onclick="restart()">Farm Again</button>
     <button class="big ghost" onclick="toTitle()">Title</button>
@@ -906,11 +1264,11 @@ function updateHud(){
   $('vignette').classList.toggle('danger', !met && run.dayT < 15 && mode==='play');
   const qf = $('quotaFill');
   qf.style.width = clamp(100*run.dayEarned/q,0,100)+'%';
-  const pace = (1 - run.dayT/DAY_LEN) * q; // where you "should" be by now
-  qf.className = met ? 'done' : (run.dayEarned < pace*0.75 && run.dayT < DAY_LEN*0.7 ? 'behind' : '');
+  const pace = (1 - run.dayT/run.dayLen) * q; // where you "should" be by now
+  qf.className = met ? 'done' : (run.dayEarned < pace*0.75 && run.dayT < run.dayLen*0.7 ? 'behind' : '');
   $('quotaTxt').textContent = 'QUOTA '+run.dayEarned+' / '+q;
   if (met && !run.qMet) { run.qMet = true; banner('QUOTA MET','<span class="sub2">THE FARM ENDURES — KEEP HARVESTING</span>','#8effc1'); sfx.day(); }
-  $('focusFill').style.width = run.focus+'%';
+  $('focusFill').style.width = clamp(100*run.focus/focusCap(),0,100)+'%';
   const k = (karma()+1)/2; // 0 blight .. 1 radiance
   const col = run.veilT>0 ? '#cfd2ff' : blend('#a86bff','#ffd75e',k);
   $('orb').style.background = 'radial-gradient(circle at 35% 35%, #fff8, transparent 60%), '+col;
@@ -923,6 +1281,19 @@ function blend(c1,c2,t){
   const p = h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
   const a=p(c1),b=p(c2);
   return 'rgb('+a.map((x,i)=>Math.round(lerp(x,b[i],t))).join(',')+')';
+}
+function renderContractPills(){
+  const row = $('hudRow3'); if (!row) return;
+  row.innerHTML = '';
+  if (!run || !run.contracts || mode!=='play') return;
+  for (const c of run.contracts) {
+    const s = document.createElement('span');
+    s.className = 'cpill'+(c.done?' done':'')+(c.hard?' rare':'');
+    const goal = contractGoal(c);
+    s.textContent = c.icon+' '+(c.done ? '✓' : Math.min(Math.floor(c.prog),goal)+'/'+goal);
+    s.onclick = openContracts;
+    row.appendChild(s);
+  }
 }
 
 function renderPanel(soft){
@@ -967,8 +1338,10 @@ function refreshHarvestBtn(hb, n){
   const ready = n.state==='idle' && Math.abs(n.v)>=0.25 && run.focus>=10;
   hb.className = 'act '+(sign>0?'harv':'harvB')+(ready && n.peak>0 ? ' ready':'');
   const t = tierOf(n.i);
-  hb.innerHTML = (sign>0?'Harvest ✦ Radiance':'Drain ✦ Blight')
-    +'<span class="cost">'+t.icon+' '+t.name+' · ~'+Math.round(n.i*100*(sign<0?1.6:1)*yieldMult(sign, npcDef(selected).venue))+'✦ · '+(sign>0?'they recover':'PERMANENT')+'</span>';
+  const emo = EMOTIONS[emotionOf(n.v, n.i)];
+  const emoMult = emo.rare ? 1.35 : 1;
+  hb.innerHTML = (sign>0?'Harvest ✦ ':'Drain ✦ ')+emo.n+' '+emo.icon
+    +'<span class="cost">'+t.icon+' '+t.name+' · ~'+Math.round(n.i*100*(sign<0?1.6:1)*yieldMult(sign, npcDef(selected).venue)*emoMult)+'✦ · '+(sign>0?'they recover':'PERMANENT')+'</span>';
   hb.disabled = !ready;
 }
 
@@ -1002,6 +1375,13 @@ function showSpecCard(t, def, pct, upgraded){
 function puff(x,y,color,n){ for(let i=0;i<n;i++) particles.push({x,y,vx:rnd(-30,30),vy:rnd(-60,-10),life:rnd(.4,.9),t:0,color,r:rnd(1.5,3.5)}); }
 function burst(x,y,color,n){ for(let i=0;i<n;i++){ const a=rnd(0,6.283),sp=rnd(40,140); particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-30,life:rnd(.5,1.1),t:0,color,r:rnd(2,4.5)}); } }
 function floatText(x,y,txt,color){ particles.push({x,y,vx:0,vy:-34,life:1.3,t:0,color,txt}); }
+function essStream(x,y,color,n){ // essence flies home to your orb
+  for (let i=0;i<n;i++){ const a=rnd(0,6.283),sp=rnd(30,90);
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-40,life:2.6,t:0,color,r:rnd(2,3.6),home:true}); }
+}
+function siphonWisp(x,y,tx,ty){
+  particles.push({x,y,sx:x,sy:y,dx:tx-x,dy:ty-y,life:0.8,t:0,color:'#b9a9e8',r:2.4,wisp:true});
+}
 
 /* ---------------- modal screens ---------------- */
 let stickyModal = false;
@@ -1013,6 +1393,27 @@ function showModal(html, center, sticky){
 }
 function closeModal(){ modalOpen = false; stickyModal = false; $('modal').style.display = 'none'; }
 $('modal').addEventListener('click', e=>{ if (e.target.id==='modal' && mode==='play' && !stickyModal) closeModal(); });
+
+function openContracts(){
+  if (mode!=='play') return; sfx.tap();
+  let rows = '';
+  for (const c of run.contracts) {
+    const goal = contractGoal(c);
+    const pc = clamp(100*c.prog/goal, 0, 100);
+    const pay = c.reward*(relic('quill')?2:1);
+    rows += `<div class="cItem ${c.done?'done':''} ${c.hard?'hard':''}">
+      <div class="ct"><span>${c.icon}</span><span>${c.label}</span>
+      <span class="rw">${c.done?'PAID':'✦'+pay}${c.givesRelic&&!c.done?' + 🔮 relic':''}</span></div>
+      <div class="cb"><div class="cbf" style="width:${pc}%"></div></div>
+    </div>`;
+  }
+  showModal(`<h2>The Broker’s Contracts</h2>
+    <div class="sub">Three orders each morning. Fulfill them before dusk — payouts land instantly${relic('quill')?' <b style="color:#ffd75e">(doubled by the Broker’s Quill)</b>':''}. The hardest order pays in <b style="color:#9ef3ff">relics</b>: permanent powers, kept forever.</div>
+    ${rows}
+    <h3>Relics earned (${Object.keys(meta.relics).length}/${RELICS.length})</h3>
+    ${RELICS.map(r=>`<div class="relicCard ${meta.relics[r.id]?'':'lock'}"><span class="ri">${r.icon}</span><div><div class="rn">${r.n}</div><div class="rd">${meta.relics[r.id]?r.d:'Fulfill hard contracts to earn this.'}</div></div></div>`).join('')}
+    <button class="big ghost" onclick="closeModal()">Close</button>`);
+}
 
 function openShop(){
   if (mode!=='play') return; sfx.tap();
@@ -1081,10 +1482,23 @@ function openSettings(){
   showModal(`<h2>Paused</h2>
     <button class="big" onclick="closeModal()">Resume</button>
     <button class="big ghost" onclick="howTo()">How to Farm</button>
+    <button class="big ghost" onclick="openRecords()">Records &amp; Relics</button>
     <button class="big ghost" onclick="abandonRun()">Abandon Run</button>
-    <div class="sub" style="margin-top:10px">The specimen case and everything you’ve learned about people are kept forever, run or no run.</div>`);
+    <div class="sub" style="margin-top:10px">The specimen case, relics, milestones, and everything you’ve learned about people are kept forever, run or no run.</div>`);
 }
 function abandonRun(){ run = null; saveRun(); stopAmbient(); closeModal(); titleScreen(); }
+
+function openRecords(back){
+  sfx.tap();
+  const relicRows = RELICS.map(r=>`<div class="relicCard ${meta.relics[r.id]?'':'lock'}"><span class="ri">${r.icon}</span><div><div class="rn">${r.n}</div><div class="rd">${meta.relics[r.id]?r.d:'Not yet earned — fulfill hard contracts.'}</div></div></div>`).join('');
+  const mileRows = MILESTONES.map(m=>`<div class="mileRow ${meta.mile[m.id]?'':'lock'}"><span class="mi">${meta.mile[m.id]?'🏆':'·'}</span><div><b>${m.n}</b> — ${m.d}</div></div>`).join('');
+  const ends = meta.endings.length ? meta.endings.join(' · ') : 'None witnessed yet.';
+  showModal(`<h2>Records &amp; Relics</h2>
+    <h3>Relics (${Object.keys(meta.relics).length}/${RELICS.length})</h3>${relicRows}
+    <h3>Milestones (${Object.keys(meta.mile).length}/${MILESTONES.length})</h3>${mileRows}
+    <h3>Endings witnessed</h3><div class="sub">${ends}</div>
+    <button class="big ghost" onclick="${back==='title'?'titleScreen()':'closeModal()'}">Back</button>`, back==='title');
+}
 
 function openCase(){
   if (mode!=='play') return; sfx.tap();
@@ -1099,7 +1513,7 @@ function openCase(){
       for (const m of mem) {
         const s = meta.case[m.id];
         html += s
-          ? `<div class="spec" style="border:1px solid ${tierOf(s.i).color}55"><span class="tier">${tierOf(s.i).icon}</span>${m.name}<br><span style="color:${tierOf(s.i).color}">${Math.round(s.i*100)}%</span></div>`
+          ? `<div class="spec" style="border:1px solid ${tierOf(s.i).color}55"><span class="tier">${tierOf(s.i).icon}</span>${m.name}<br><span style="color:${tierOf(s.i).color}">${Math.round(s.i*100)}%${s.emo?' '+EMOTIONS[s.emo].icon:''}</span></div>`
           : `<div class="spec empty"><span class="tier">?</span>${m.name}<br>&nbsp;</div>`;
       }
       html += '</div></div>';
@@ -1122,6 +1536,8 @@ function openMap(){
 function goVenue(id){
   if (!run.unlocked[id]) return;
   run.venue = id; selected = null; renderPanel(); closeModal(); sfx.tap();
+  ambientP = [];
+  if (run.mara) { run.mara.x = W*0.92; run.mara.y = playTop()+40; run.mara.target = null; }
   startAmbient(id);
   toast('➜ '+venueById(id).name);
 }
@@ -1131,10 +1547,11 @@ function howTo(back){
   <p>People give off <b>aura</b> — emotional energy. You harvest it. Meet the daily quota by dusk or the farm withers.</p>
   <p><span class="gold">Radiance</span>: lift someone up, harvest their joy. Slower — but they <b>recover</b> and can be farmed again.</p>
   <p><span class="viol">Blight</span>: grind someone down, drain their misery. Pays 1.6× and spikes higher — but it’s <b>permanent</b>. They become a husk, and husks spread gloom to everyone nearby.</p>
-  <p><b>Timing is the skill.</b> An aura ring pulses faster as feeling builds. At high charge a <b>⚡ peak window</b> opens — harvest inside it for the best specimens. Too early: a weak specimen forever. Too late: the feeling vents to nothing. Blight peaks are short and sharp; Radiance peaks are wide and repeatable.</p>
-  <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. Re-capture to upgrade.</p>
-  <p>Your own aura shows what you are. Lean hard one way and the world responds — your opposite touch weakens.</p>
-  <p><b>People have patterns.</b> Interact with someone enough and you’ll read their traits — Sunny, Spirally, Guarded, Deep Well… — and what you learn is kept forever. Each day brings <b>emotional weather</b> and sometimes a venue event worth chasing. Chain harvests inside peak windows of the same type for a <b>⚡ combo</b> — switching sides breaks it.</p>
+  <p><b>Six essences.</b> What you capture depends on where you steered the feeling: mild lifts give <b style="color:#8effc1">Hope 🌿</b>, strong ones <b style="color:#ffd75e">Joy ☀️</b>; a gentle sour gives <b style="color:#6fa8ff">Sorrow 💧</b>, a hot one <b style="color:#ff6b52">Rage 🔥</b>. Push someone euphoric to the very peak for rare <b style="color:#9ef3ff">Awe ✨</b>, or to the very bottom for rare <b style="color:#b06bff">Dread 🕸️</b> — both pay 1.35×.</p>
+  <p><b>Timing is the skill.</b> An aura ring pulses faster as feeling builds. At high charge a <b>⚡ peak window</b> opens — harvest inside it for the best specimens. Too early: a weak specimen forever. Too late: the feeling vents to nothing.</p>
+  <p><b>📜 The Broker posts 3 contracts each morning</b> — deliver specific essences, land clean captures, chain combos. Payouts are instant; the hardest contracts pay in <b style="color:#9ef3ff">relics</b>, permanent powers kept across every run.</p>
+  <p><b>🩶 Mara the Gray</b> arrives on day 3 — the Broker’s other harvester. She siphons whatever you leave ripening. Tap her to flare your aura and drive her off (15 focus).</p>
+  <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. People have learnable <b>traits</b>, days have <b>weather</b> and <b>venue events</b>, and six venues unlock as you push each one to its bloom threshold.</p>
   </div><button class="big" onclick="${back==='title'?'titleScreen()':'closeModal()'}">Got it</button>`, true);
   meta.seenHow = true; saveMeta();
 }
@@ -1142,17 +1559,20 @@ function howTo(back){
 function titleScreen(){
   mode = 'title'; run = null; selected = null; stopAmbient();
   $('hud').style.display='none'; $('menuBtns').style.display='none'; $('npcPanel').style.display='none';
+  $('hudRow3').innerHTML='';
   const hasSave = !!loadRun();
   const specs = Object.keys(meta.case).length;
+  const nRelics = Object.keys(meta.relics).length;
   showModal(`<div class="titleWrap"><h1>AURA FARM</h1><div class="tg">harvest feelings · choose what you become</div></div>
-    ${specs?`<div class="sub" style="text-align:center">📦 ${specs}/${ROSTER.length} specimens kept · ${setsDone()} sets${meta.bestPurity!==null?' · last purity '+meta.bestPurity+'%':''}</div>`:''}
+    ${specs||nRelics?`<div class="sub" style="text-align:center">📦 ${specs}/${ROSTER.length} specimens · ${setsDone()} sets · 🔮 ${nRelics}/${RELICS.length} relics${meta.bestPurity!==null?' · last purity '+meta.bestPurity+'%':''}</div>`:''}
     ${hasSave?'<button class="big" onclick="startGame(false)">Continue Run</button>':''}
     <button class="big ${hasSave?'ghost':''}" onclick="confirmNew()">New Run</button>
-    <button class="big ghost" onclick="howTo('title')">How to Farm</button>`, true);
+    <button class="big ghost" onclick="howTo('title')">How to Farm</button>
+    <button class="big ghost" onclick="openRecords('title')">Records &amp; Relics</button>`, true);
 }
 function confirmNew(){
   if (loadRun()) {
-    showModal(`<h2>Start over?</h2><div class="sub">Your current run (mid-farm) will be abandoned. The specimen case is safe either way.</div>
+    showModal(`<h2>Start over?</h2><div class="sub">Your current run (mid-farm) will be abandoned. The specimen case and relics are safe either way.</div>
       <button class="big" onclick="startGame(true)">Abandon &amp; Start Fresh</button>
       <button class="big ghost" onclick="titleScreen()">Back</button>`, true);
   } else if (!meta.seenHow) { howToThenStart(); }
@@ -1160,8 +1580,8 @@ function confirmNew(){
 }
 function howToThenStart(){
   showModal(`<h2>How to Farm</h2><div class="howto">
-  <p>Tap a person. <span class="gold">Hype them up</span> or <span class="viol">put them down</span> to build their emotional charge, then <b>harvest</b> it as essence. Meet the quota before the 2-minute day ends.</p>
-  <p><span class="gold">Radiance</span> is renewable. <span class="viol">Blight</span> pays more but husks the person permanently. Watch the ring: harvest inside the <b>⚡ peak window</b> for the finest specimens.</p>
+  <p>Tap a person. <span class="gold">Hype them up</span> or <span class="viol">put them down</span> to build their emotional charge, then <b>harvest</b> it as essence. Meet the quota before the day ends.</p>
+  <p><span class="gold">Radiance</span> is renewable. <span class="viol">Blight</span> pays more but husks the person permanently. Watch the ring: harvest inside the <b>⚡ peak window</b> for the finest specimens — and check the Broker’s 📜 contracts for bonus orders.</p>
   </div><button class="big" onclick="startGame(true)">Start Farming</button>`, true);
   meta.seenHow = true; saveMeta();
 }
@@ -1171,6 +1591,10 @@ cv.addEventListener('pointerdown', e=>{
   if (mode!=='play' || modalOpen || !run) return;
   ac(); // wake audio on gesture
   const x = e.clientX, y = e.clientY;
+  if (run.mara) {
+    const dx = run.mara.x-x, dy = run.mara.y-y;
+    if (dx*dx+dy*dy < 42*42) { shooMara(); return; }
+  }
   let best = null, bd = 44*44;
   for (const d of ROSTER) {
     if (d.venue!==run.venue) continue;
@@ -1183,146 +1607,631 @@ cv.addEventListener('pointerdown', e=>{
 });
 
 /* ---------------- rendering ---------------- */
+const fract = x => x - Math.floor(x);
 function draw(){
   ctx.clearRect(0,0,W,H);
   if (!run || (mode!=='play' && mode!=='over' && mode!=='ending')) { drawBgTitle(); return; }
   const vd = venueById(run.venue), z = run.zones[run.venue];
-  drawVenue(vd, z);
   const t = performance.now()/1000;
+  const dp = clamp(1 - run.dayT/run.dayLen, 0, 1);
+  drawVenue(vd, z, t, dp);
+  updateAmbient(vd, dp);
+  drawAmbient();
+  const ents = [];
   for (const d of ROSTER) {
     if (d.venue!==run.venue) continue;
-    drawNPC(d, run.npcs[d.id], t);
+    const n = run.npcs[d.id];
+    ents.push({ y:n.y, f:()=>drawNPC(d, n, t) });
   }
+  if (run.mara) { const m = run.mara; ents.push({ y:m.y, f:()=>drawMara(m, t) }); }
+  ents.sort((a,b)=>a.y-b.y);
+  for (const e of ents) e.f();
+  if (run.mara && run.mara.target) drawTether(t);
   drawParticles();
+  duskOverlay(dp);
 }
 function drawBgTitle(){
   const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#141028'); g.addColorStop(1,'#0b0a14');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   const t = performance.now()/1000;
-  for (let i=0;i<24;i++){
+  for (let i=0;i<30;i++){
     const x = (i*97.3)%W, y = (i*173.7 + t*12*(1+(i%3)))%H;
     ctx.globalAlpha = 0.25+0.2*Math.sin(t+i);
-    ctx.fillStyle = i%2 ? '#ffd75e' : '#a86bff';
+    ctx.fillStyle = ['#ffd75e','#a86bff','#8effc1','#9ef3ff'][i%4];
     ctx.beginPath(); ctx.arc(x, H-y, 2.2, 0, 6.283); ctx.fill();
   }
   ctx.globalAlpha = 1;
 }
-function drawVenue(vd, z){
-  const g = ctx.createLinearGradient(0,0,0,H);
-  let s0 = vd.sky[0], s1 = vd.sky[1];
-  g.addColorStop(0,s0); g.addColorStop(1,s1);
-  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
-  if (z.bloomed==='bloom') { ctx.fillStyle='rgba(140,255,190,0.06)'; ctx.fillRect(0,0,W,H); }
-  if (z.bloomed==='blight'){ ctx.fillStyle='rgba(90,30,140,0.14)'; ctx.fillRect(0,0,W,H); }
-  // ground
-  ctx.fillStyle = vd.ground;
-  ctx.beginPath(); ctx.ellipse(W/2, playBot()+140, W*0.75, 220, 0, 0, 6.283); ctx.fill();
-  // simple set dressing
-  ctx.globalAlpha = 0.5;
-  if (vd.id==='park') {
-    for (const [fx,fy,r] of [[0.12,0.22,26],[0.88,0.2,32],[0.5,0.14,22]]) {
-      ctx.fillStyle='#274a2c'; ctx.beginPath(); ctx.arc(fx*W, playTop()+fy*(playBot()-playTop()), r, 0, 6.283); ctx.fill();
-      ctx.fillStyle='#3a2b1c'; ctx.fillRect(fx*W-3, playTop()+fy*(playBot()-playTop())+r-6, 6, 22);
-    }
-  } else if (vd.id==='club') {
-    const t = performance.now()/1000;
-    for (let i=0;i<4;i++){
-      ctx.fillStyle = ['#ff2f9255','#2fdcff55','#c02fff55','#ffe32f55'][i];
-      const bx = W*(0.2+0.2*i) + Math.sin(t*0.7+i)*30;
-      ctx.beginPath(); ctx.moveTo(bx,0); ctx.lineTo(bx-46, playBot()); ctx.lineTo(bx+46, playBot()); ctx.closePath(); ctx.fill();
-    }
-  } else if (vd.id==='office') {
-    ctx.fillStyle='#2c3448';
-    for (let i=0;i<3;i++) ctx.fillRect(W*0.14 + i*W*0.28, playTop()+30, W*0.16, 26);
-    ctx.fillStyle='#e8ecf455';
-    for (let i=0;i<5;i++) ctx.fillRect(W*0.1+i*W*0.18, 70, W*0.08, 5);
-  } else { // night market lantern strings
-    const t = performance.now()/1000;
-    const cols = ['#ffb84e','#ff6b81','#7fe08e','#6bb8ff'];
-    for (let row=0; row<2; row++) for (let i=0; i<7; i++) {
-      const x = W*(0.08+0.14*i), y = playTop()+26+row*44 + Math.sin(i*1.3+row+t*0.6)*6;
-      ctx.fillStyle = cols[(i+row)%4];
-      ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(x,y,6.5,0,6.283); ctx.fill();
-      ctx.globalAlpha = 0.16; ctx.beginPath(); ctx.arc(x,y,13,0,6.283); ctx.fill();
-    }
-  }
-  ctx.globalAlpha = 1;
-  // daylight fades to dusk as the quota clock runs down
-  const dp = 1 - run.dayT/DAY_LEN;
+function duskOverlay(dp){
   ctx.fillStyle = 'rgba(255,140,60,'+(0.10*Math.sin(Math.PI*dp)).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
   ctx.fillStyle = 'rgba(4,2,12,'+(0.38*Math.pow(dp,1.5)).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
+  const vg = ctx.createRadialGradient(W/2, H*0.44, Math.min(W,H)*0.42, W/2, H*0.44, Math.max(W,H)*0.78);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,10,0.34)');
+  ctx.fillStyle = vg; ctx.fillRect(0,0,W,H);
 }
-function drawNPC(d, n, t){
-  const husked = n.state==='husk', rec = n.state==='recover';
-  const y = n.y + Math.sin(t*1.7 + n.bob)*2.5;
-  // aura ring
-  if (!husked) {
-    const pulse = 1 + 0.5*Math.sin(t * (2 + n.i*9));
-    const rr = 24 + n.i*13 + pulse*2.5;
-    const col = n.v >= 0 ? '255,215,94' : '168,107,255';
-    const alpha = rec ? 0.10 : 0.14 + n.i*0.4;
-    const grad = ctx.createRadialGradient(n.x, y, 6, n.x, y, rr);
-    grad.addColorStop(0, 'rgba('+col+','+alpha+')');
-    grad.addColorStop(1, 'rgba('+col+',0)');
-    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(n.x, y, rr, 0, 6.283); ctx.fill();
-    if (n.peak > 0) { // peak sparkle ring
-      ctx.strokeStyle = 'rgba(255,255,255,'+(0.5+0.4*Math.sin(t*12))+')';
-      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(n.x, y, rr+3, 0, 6.283*(n.peak/n.peakDur)); ctx.stroke();
-    }
-    // always-on charge ring: fills clockwise as emotional charge builds
-    const cr = 21;
-    ctx.lineWidth = 3; ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(255,255,255,.13)';
-    ctx.beginPath(); ctx.arc(n.x, y-2, cr, 0, 6.283); ctx.stroke();
-    ctx.strokeStyle = n.peak>0 && Math.sin(t*14)>0 ? '#fff' : (n.v>=0 ? '#ffd75e' : '#a86bff');
-    ctx.beginPath(); ctx.arc(n.x, y-2, cr, -1.5708, -1.5708 + 6.283*Math.min(1,n.i)); ctx.stroke();
-    ctx.lineCap = 'butt';
-    if (n.peak > 0 && n.state==='idle') { // the moment to strike
-      ctx.fillStyle = '#fff'; ctx.font = '900 14px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('⚡', n.x, y-30 - 2.5*Math.sin(t*10));
+function stars(count, alpha, t){
+  for (let i=0;i<count;i++){
+    const x = fract(i*0.618034+0.13)*W, y = fract(i*0.381966+0.29)*H*0.5;
+    const tw = 0.5+0.5*Math.sin(t*(1+(i%5)*0.4)+i);
+    ctx.globalAlpha = alpha*(0.35+0.65*tw);
+    ctx.fillStyle = i%7===0 ? '#cfe0ff' : '#fff';
+    ctx.beginPath(); ctx.arc(x, y, i%9===0?1.6:1, 0, 6.283); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function drawVenue(vd, z, t, dp){
+  // ----- sky -----
+  let s0 = vd.sky[0], s1 = vd.sky[1];
+  if (vd.id==='park') { // full day cycle: morning blue -> amber dusk
+    const k = Math.pow(dp,1.3);
+    s0 = blend('#2a5b9e','#33173f',k); s1 = blend('#7ab8d8','#d8703a',k);
+  }
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,s0); g.addColorStop(1,s1);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+  // stars: night venues always, park as dusk deepens
+  if (vd.night) stars(70, 0.8, t);
+  else if (vd.outdoor && dp>0.6) stars(50, (dp-0.6)*2.2, t);
+
+  // sun / moon
+  if (vd.id==='park') {
+    const sx = lerp(W*0.14, W*0.86, dp), sy = 120 - 55*Math.sin(Math.PI*dp) + 55;
+    const sun = ctx.createRadialGradient(sx,sy,4,sx,sy,60);
+    const warm = dp>0.6 ? '255,150,80' : '255,236,160';
+    sun.addColorStop(0,'rgba('+warm+',.95)'); sun.addColorStop(0.25,'rgba('+warm+',.5)'); sun.addColorStop(1,'rgba('+warm+',0)');
+    ctx.fillStyle = sun; ctx.beginPath(); ctx.arc(sx,sy,60,0,6.283); ctx.fill();
+    // drifting clouds
+    ctx.fillStyle = 'rgba(255,255,255,'+(0.22*(1-dp*0.7))+')';
+    for (let i=0;i<3;i++){
+      const cx = ((t*6+i*230)% (W+180))-90, cy = 70+i*34;
+      ctx.beginPath();
+      ctx.ellipse(cx,cy,44,12,0,0,6.283); ctx.ellipse(cx+28,cy+4,30,10,0,0,6.283); ctx.ellipse(cx-30,cy+5,26,9,0,0,6.283);
+      ctx.fill();
     }
   }
-  // body
+  if (vd.night) {
+    const mx = W*0.82, my = 84;
+    const mg = ctx.createRadialGradient(mx,my,4,mx,my,52);
+    mg.addColorStop(0,'rgba(230,235,255,.9)'); mg.addColorStop(0.3,'rgba(200,210,255,.35)'); mg.addColorStop(1,'rgba(200,210,255,0)');
+    ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx,my,52,0,6.283); ctx.fill();
+    ctx.fillStyle = '#e8ecfa'; ctx.beginPath(); ctx.arc(mx,my,15,0,6.283); ctx.fill();
+    ctx.fillStyle = 'rgba(180,190,220,.5)';
+    ctx.beginPath(); ctx.arc(mx-5,my-3,3.4,0,6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+4,my+5,2.2,0,6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(mx+6,my-6,1.6,0,6.283); ctx.fill();
+  }
+
+  // ----- distant scenery layer -----
+  if (vd.id==='park') {
+    ctx.fillStyle = 'rgba(20,60,40,.55)';
+    ctx.beginPath(); ctx.moveTo(0, playTop()+40);
+    for (let x=0;x<=W;x+=40) ctx.lineTo(x, playTop()+40-18*Math.sin(x*0.013+1)-8*Math.sin(x*0.05));
+    ctx.lineTo(W, playTop()+70); ctx.lineTo(0, playTop()+70); ctx.closePath(); ctx.fill();
+  } else if (vd.id==='rooftop' || vd.id==='office') {
+    // city skyline with lit windows
+    const base = vd.id==='rooftop' ? playTop()+58 : playTop()+52;
+    for (let i=0;i<11;i++){
+      const bw = 34+((i*37)%40), bx = i*(W/10)-10, bh = 40+((i*53)%70);
+      ctx.fillStyle = vd.id==='rooftop' ? '#10142a' : '#1a2233';
+      ctx.fillRect(bx, base-bh, bw, bh);
+      ctx.fillStyle = 'rgba(255,220,130,.5)';
+      for (let wy=0; wy<Math.floor(bh/14); wy++) for (let wx=0; wx<Math.floor(bw/12); wx++)
+        if (((i*7+wy*3+wx*5)%9)<3) ctx.fillRect(bx+4+wx*12, base-bh+5+wy*14, 5, 6);
+    }
+  } else if (vd.id==='chapel') {
+    // stained glass windows + light shafts
+    const cols = [['#e86a8a','#8a4ae8'],['#ffd75e','#e8742c'],['#5ecfff','#3a6ae8']];
+    for (let i=0;i<3;i++){
+      const wx = W*(0.22+0.28*i), wy = playTop()-46, ww = 42, wh = 90;
+      const wg = ctx.createLinearGradient(wx,wy,wx,wy+wh);
+      wg.addColorStop(0,cols[i][0]); wg.addColorStop(1,cols[i][1]);
+      ctx.globalAlpha = 0.8; ctx.fillStyle = wg;
+      ctx.beginPath();
+      ctx.moveTo(wx-ww/2, wy+wh); ctx.lineTo(wx-ww/2, wy+18);
+      ctx.arc(wx, wy+18, ww/2, Math.PI, 0);
+      ctx.lineTo(wx+ww/2, wy+wh); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#0d0a20'; ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx, wy+wh); ctx.moveTo(wx-ww/2, wy+40); ctx.lineTo(wx+ww/2, wy+40); ctx.stroke();
+      // shaft
+      ctx.globalAlpha = 0.10+0.03*Math.sin(t*0.7+i);
+      ctx.fillStyle = cols[i][0];
+      ctx.beginPath(); ctx.moveTo(wx-ww/2, wy+20); ctx.lineTo(wx+ww/2, wy+20);
+      ctx.lineTo(wx+ww*1.5, playBot()+40); ctx.lineTo(wx-ww*1.5, playBot()+40); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ----- ground -----
+  const gy = playBot()+140;
+  const gr = ctx.createRadialGradient(W/2, gy, 40, W/2, gy, W*0.8);
+  gr.addColorStop(0, blend(vd.ground, '#ffffff', 0.10));
+  gr.addColorStop(0.55, vd.ground);
+  gr.addColorStop(1, blend(vd.ground, '#000000', 0.5));
+  ctx.fillStyle = gr;
+  ctx.beginPath(); ctx.ellipse(W/2, gy, W*0.78, 230, 0, 0, 6.283); ctx.fill();
+
+  // ----- venue set dressing -----
+  ctx.save();
+  if (vd.id==='park') {
+    // pond
+    ctx.globalAlpha = 0.75;
+    const pg = ctx.createLinearGradient(0,playBot()-60,0,playBot()-10);
+    pg.addColorStop(0,'#3a7ba8'); pg.addColorStop(1,'#274a68');
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.ellipse(W*0.82, playBot()-32, 70, 20, 0, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(W*0.82, playBot()-32, 46+4*Math.sin(t), 12, 0, 0, 6.283); ctx.stroke();
+    // trees with layered canopies
+    ctx.globalAlpha = 1;
+    for (const [fx,fy,r] of [[0.10,0.16,30],[0.90,0.10,36],[0.46,0.06,26]]) {
+      const tx = fx*W, ty = playTop()+fy*(playBot()-playTop());
+      ctx.fillStyle='#3a2b1c'; ctx.fillRect(tx-4, ty+r-10, 8, 34);
+      ctx.fillStyle='#1e3d24'; ctx.beginPath(); ctx.arc(tx, ty, r, 0, 6.283); ctx.fill();
+      ctx.fillStyle='#2a5230'; ctx.beginPath(); ctx.arc(tx-r*0.4, ty-r*0.3, r*0.62, 0, 6.283); ctx.fill();
+      ctx.fillStyle='#39683f'; ctx.beginPath(); ctx.arc(tx+r*0.35, ty-r*0.42, r*0.5, 0, 6.283); ctx.fill();
+    }
+    // grass tufts
+    ctx.strokeStyle = 'rgba(120,190,110,.4)'; ctx.lineWidth = 1.4;
+    for (let i=0;i<26;i++){
+      const gx = fract(i*0.618+0.07)*W, gyy = playTop()+60+fract(i*0.318+0.61)*(playBot()-playTop()-60);
+      ctx.beginPath(); ctx.moveTo(gx,gyy); ctx.lineTo(gx-2.5,gyy-6); ctx.moveTo(gx,gyy); ctx.lineTo(gx+2.5,gyy-5); ctx.stroke();
+    }
+  } else if (vd.id==='club') {
+    // sweeping colored beams
+    for (let i=0;i<4;i++){
+      ctx.fillStyle = ['#ff2f9244','#2fdcff44','#c02fff44','#ffe32f44'][i];
+      const bx = W*(0.2+0.2*i) + Math.sin(t*0.7+i)*40;
+      ctx.beginPath(); ctx.moveTo(bx,0); ctx.lineTo(bx-52, playBot()); ctx.lineTo(bx+52, playBot()); ctx.closePath(); ctx.fill();
+    }
+    // disco ball
+    const dbx = W/2, dby = 64;
+    ctx.strokeStyle='#556'; ctx.beginPath(); ctx.moveTo(dbx,0); ctx.lineTo(dbx,dby-18); ctx.stroke();
+    ctx.fillStyle='#c8d0e0'; ctx.beginPath(); ctx.arc(dbx,dby,18,0,6.283); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.75)';
+    for (let i=0;i<12;i++){ const a=t*1.6+i*0.524; ctx.fillRect(dbx+Math.cos(a)*14-1.5, dby+Math.sin(a)*14-1.5, 3, 3); }
+    // speaker stacks
+    for (const sxx of [W*0.06, W*0.86]) {
+      ctx.fillStyle='#151222'; ctx.fillRect(sxx, playTop()+10, 44, 66);
+      ctx.strokeStyle='#3a3357'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(sxx+22, playTop()+30, 12+1.5*Math.sin(t*9), 0, 6.283); ctx.stroke();
+      ctx.beginPath(); ctx.arc(sxx+22, playTop()+58, 8+1.2*Math.sin(t*9+1), 0, 6.283); ctx.stroke();
+    }
+    // dance floor grid
+    ctx.strokeStyle='rgba(160,120,255,.16)'; ctx.lineWidth=1;
+    for (let i=0;i<7;i++){ const yy=playTop()+70+i*(playBot()-playTop()-70)/6;
+      ctx.beginPath(); ctx.moveTo(W*0.06,yy); ctx.lineTo(W*0.94,yy); ctx.stroke(); }
+    for (let i=0;i<9;i++){ const xx=W*(0.06+0.11*i);
+      ctx.beginPath(); ctx.moveTo(xx,playTop()+70); ctx.lineTo(W/2+(xx-W/2)*1.5, playBot()); ctx.stroke(); }
+  } else if (vd.id==='office') {
+    // window wall glass
+    ctx.fillStyle='rgba(90,120,170,.14)'; ctx.fillRect(0, 0, W, playTop()+58);
+    ctx.strokeStyle='rgba(200,220,255,.18)'; ctx.lineWidth=2;
+    for (let i=1;i<5;i++){ const xx=W*i/5; ctx.beginPath(); ctx.moveTo(xx,0); ctx.lineTo(xx,playTop()+58); ctx.stroke(); }
+    // fluorescent bars with flicker
+    for (let i=0;i<4;i++){
+      const fl = (Math.sin(t*13+i*7)>0.96) ? 0.35 : 0.8;
+      ctx.fillStyle='rgba(230,240,255,'+fl+')';
+      ctx.fillRect(W*(0.12+i*0.22), 66, W*0.13, 5);
+    }
+    // desks
+    for (let i=0;i<3;i++){
+      const dx2 = W*0.14 + i*W*0.30, dy2 = playTop()+34;
+      ctx.fillStyle='#2c3448'; ctx.fillRect(dx2, dy2, W*0.18, 10);
+      ctx.fillStyle='#232a3a'; ctx.fillRect(dx2+4, dy2+10, 6, 18); ctx.fillRect(dx2+W*0.18-10, dy2+10, 6, 18);
+      ctx.fillStyle='#4a5a7a'; ctx.fillRect(dx2+W*0.05, dy2-12, 18, 12); // monitor
+      ctx.fillStyle='#8fb0ff'; ctx.fillRect(dx2+W*0.05+2, dy2-10, 14, 8);
+    }
+  } else if (vd.id==='market') {
+    // stall canopies
+    for (let i=0;i<3;i++){
+      const sx2 = W*(0.12+0.34*i), sw2 = W*0.24, sy2 = playTop()+12;
+      ctx.fillStyle = i%2 ? '#7a2e3e' : '#2e5a7a';
+      ctx.beginPath(); ctx.moveTo(sx2,sy2+22); ctx.lineTo(sx2+sw2/2,sy2); ctx.lineTo(sx2+sw2,sy2+22); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.16)';
+      for (let st=0; st<4; st++) ctx.fillRect(sx2+st*sw2/4, sy2+16, sw2/8, 8);
+      ctx.fillStyle='#3a2b20'; ctx.fillRect(sx2+3, sy2+22, 4, 26); ctx.fillRect(sx2+sw2-7, sy2+22, 4, 26);
+    }
+    // lantern strings
+    const cols = ['#ffb84e','#ff6b81','#7fe08e','#6bb8ff'];
+    for (let row=0; row<2; row++) for (let i=0; i<7; i++) {
+      const x = W*(0.08+0.14*i), y = playTop()+38+row*46 + Math.sin(i*1.3+row+t*0.6)*6;
+      ctx.strokeStyle='rgba(255,255,255,.12)';
+      if (i<6){ ctx.beginPath(); ctx.moveTo(x,y-8); ctx.quadraticCurveTo(x+W*0.07, y+6, W*(0.08+0.14*(i+1)), playTop()+30+row*46); ctx.stroke(); }
+      const lg = ctx.createRadialGradient(x,y,1,x,y,16);
+      lg.addColorStop(0,cols[(i+row)%4]); lg.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.globalAlpha=0.5; ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(x,y,16,0,6.283); ctx.fill();
+      ctx.globalAlpha=0.95; ctx.fillStyle=cols[(i+row)%4]; ctx.beginPath(); ctx.arc(x,y,5.5,0,6.283); ctx.fill();
+      ctx.globalAlpha=1;
+    }
+    // cobbles
+    ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=1;
+    for (let i=0;i<18;i++){
+      const cx2=fract(i*0.618+0.21)*W, cy2=playTop()+90+fract(i*0.381+0.5)*(playBot()-playTop()-80);
+      ctx.beginPath(); ctx.ellipse(cx2,cy2,9,4,0,0,6.283); ctx.stroke();
+    }
+  } else if (vd.id==='chapel') {
+    // candle rows
+    for (let i=0;i<8;i++){
+      const cx2 = W*(0.09+0.115*i), cy2 = playBot()-14;
+      ctx.fillStyle='#d8cfa8'; ctx.fillRect(cx2-1.5, cy2-8, 3, 8);
+      const fl = 0.7+0.3*Math.sin(t*11+i*2.4);
+      const cg = ctx.createRadialGradient(cx2,cy2-11,0.5,cx2,cy2-11,9);
+      cg.addColorStop(0,'rgba(255,210,110,'+(0.9*fl)+')'); cg.addColorStop(1,'rgba(255,160,60,0)');
+      ctx.fillStyle=cg; ctx.beginPath(); ctx.arc(cx2,cy2-11,9,0,6.283); ctx.fill();
+      ctx.fillStyle='rgba(255,236,170,'+fl+')'; ctx.beginPath(); ctx.ellipse(cx2,cy2-11,1.6,3,0,0,6.283); ctx.fill();
+    }
+    // pews (subtle)
+    ctx.fillStyle='rgba(60,42,80,.5)';
+    ctx.fillRect(W*0.05, playTop()+16, W*0.26, 8);
+    ctx.fillRect(W*0.69, playTop()+16, W*0.26, 8);
+    // checker tiles
+    ctx.fillStyle='rgba(255,255,255,.035)';
+    for (let ry=0; ry<5; ry++) for (let rx=0; rx<10; rx++)
+      if ((rx+ry)%2===0) ctx.fillRect(W*0.05+rx*W*0.09, playTop()+92+ry*(playBot()-playTop()-92)/5, W*0.09, (playBot()-playTop()-92)/5);
+  } else if (vd.id==='rooftop') {
+    // roof edge + railing
+    ctx.strokeStyle='rgba(180,190,220,.35)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(W*0.03, playTop()+64); ctx.lineTo(W*0.97, playTop()+64); ctx.stroke();
+    for (let i=0;i<15;i++){ const xx=W*(0.03+0.067*i);
+      ctx.beginPath(); ctx.moveTo(xx,playTop()+64); ctx.lineTo(xx,playTop()+82); ctx.stroke(); }
+    // string lights across
+    for (let i=0;i<10;i++){
+      const x = W*(0.05+0.10*i), y = playTop()+96+Math.sin(i*1.1+t*0.5)*5;
+      ctx.fillStyle=['#ffd75e','#ffb0c8','#b0e8ff'][i%3];
+      ctx.globalAlpha=0.9; ctx.beginPath(); ctx.arc(x,y,3.6,0,6.283); ctx.fill();
+      ctx.globalAlpha=0.25; ctx.beginPath(); ctx.arc(x,y,9,0,6.283); ctx.fill();
+      ctx.globalAlpha=1;
+    }
+    // AC unit + antenna
+    ctx.fillStyle='#252840'; ctx.fillRect(W*0.82, playTop()+120, 54, 30);
+    ctx.strokeStyle='#3a3f5c'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.arc(W*0.82+27, playTop()+135, 9, 0, 6.283); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*0.08, playTop()+118); ctx.lineTo(W*0.08, playTop()+70); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*0.08, playTop()+78); ctx.lineTo(W*0.11, playTop()+86); ctx.stroke();
+  }
+  ctx.restore();
+
+  // ----- weather effects -----
+  const wx = WX();
+  if (wx.id==='drizzle') {
+    ctx.strokeStyle = 'rgba(170,190,230,.28)'; ctx.lineWidth = 1;
+    for (let i=0;i<44;i++){
+      const rx = fract(i*0.618+0.11)*W;
+      const ry = fract(i*0.318+t*(0.7+(i%3)*0.22))*H;
+      ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx-2.5,ry+11); ctx.stroke();
+    }
+    ctx.fillStyle='rgba(30,40,60,.14)'; ctx.fillRect(0,0,W,H);
+  } else if (wx.id==='golden') {
+    for (let i=0;i<3;i++){
+      ctx.fillStyle = 'rgba(255,220,130,'+(0.05+0.02*Math.sin(t*0.5+i*2))+')';
+      const bx = W*(0.16+0.3*i)+Math.sin(t*0.13+i)*24;
+      ctx.beginPath(); ctx.moveTo(bx,0); ctx.lineTo(bx+W*0.14,0); ctx.lineTo(bx+W*0.30, H); ctx.lineTo(bx+W*0.06, H); ctx.closePath(); ctx.fill();
+    }
+  } else if (wx.id==='static') {
+    for (let i=0;i<14;i++){
+      const sx2 = fract(i*0.618+fract(t*0.09))*W, sy2 = fract(i*0.318+0.4)*H*0.8;
+      ctx.globalAlpha = Math.max(0, Math.sin(t*7+i*2.2))*0.5;
+      ctx.fillStyle='#dfe8ff';
+      ctx.fillRect(sx2, sy2, 1.6, 1.6);
+    }
+    ctx.globalAlpha=1;
+  } else if (wx.id==='restless') {
+    ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1.2;
+    for (let i=0;i<6;i++){
+      const wy2 = playTop()+30+i*(playBot()-playTop())/6;
+      const off = fract(t*(0.25+(i%3)*0.1)+i*0.3)*W*1.4-W*0.2;
+      ctx.beginPath();
+      ctx.moveTo(off,wy2);
+      ctx.quadraticCurveTo(off+40, wy2-6, off+80, wy2);
+      ctx.quadraticCurveTo(off+110, wy2+5, off+130, wy2);
+      ctx.stroke();
+    }
+  }
+
+  // bloom-state tint
+  if (z.bloomed==='bloom') { ctx.fillStyle='rgba(140,255,190,0.06)'; ctx.fillRect(0,0,W,H); }
+  if (z.bloomed==='blight'){ ctx.fillStyle='rgba(90,30,140,0.14)'; ctx.fillRect(0,0,W,H); }
+}
+
+/* ---------------- ambient drifters ---------------- */
+function updateAmbient(vd, dp){
+  const dt = dtGlobal;
+  if (ambientP.length < 40) {
+    if (vd.id==='park') {
+      if (dp>0.4 && Math.random()<dt*4) ambientP.push({ x:rnd(0,W), y:rnd(playTop(),playBot()), vx:rnd(-8,8), vy:rnd(-6,6), life:rnd(3,6), t:0, r:1.7, c:'#d8ffa0', fly:true });
+      if (Math.random()<dt*1.2) ambientP.push({ x:rnd(0,W), y:-8, vx:rnd(-14,10), vy:rnd(14,26), life:rnd(5,8), t:0, r:2.3, c:'#ffc0d8', sway:true });
+    } else if (vd.id==='market') {
+      if (Math.random()<dt*3) ambientP.push({ x:rnd(W*0.1,W*0.9), y:playBot()-20, vx:rnd(-6,6), vy:rnd(-30,-16), life:rnd(1.5,3), t:0, r:1.6, c:'#ffb060', fly:true });
+    } else if (vd.id==='chapel') {
+      if (Math.random()<dt*2.5) ambientP.push({ x:rnd(W*0.15,W*0.85), y:rnd(80,playBot()), vx:rnd(-3,3), vy:rnd(2,7), life:rnd(4,8), t:0, r:1.3, c:'#e8dcff', mote:true });
+    } else if (vd.id==='club') {
+      if (Math.random()<dt*2) ambientP.push({ x:rnd(0,W), y:-6, vx:rnd(-10,10), vy:rnd(30,60), life:rnd(2,4), t:0, r:2, c:pick(['#ff6b90','#8effc1','#ffd75e','#6bb8ff']), sway:true });
+    } else if (vd.id==='rooftop') {
+      if (Math.random()<dt*1.2) ambientP.push({ x:-10, y:rnd(60,playTop()+40), vx:rnd(14,26), vy:rnd(-2,2), life:rnd(6,10), t:0, r:1.5, c:'#cfe0ff', fly:true });
+    }
+  }
+  for (let i=ambientP.length-1;i>=0;i--){
+    const p = ambientP[i]; p.t += dt;
+    if (p.t>=p.life){ ambientP.splice(i,1); continue; }
+    if (p.sway) p.x += Math.sin(p.t*2.4)*16*dt;
+    p.x += p.vx*dt; p.y += p.vy*dt;
+  }
+}
+function drawAmbient(){
+  const t = performance.now()/1000;
+  for (const p of ambientP){
+    const a = Math.min(1, Math.min(p.t, p.life-p.t)*2);
+    ctx.globalAlpha = a * (p.fly ? 0.5+0.5*Math.sin(t*6+p.x) : 0.7);
+    ctx.fillStyle = p.c;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------------- characters ---------------- */
+const LOOKS = {};
+function lookOf(id){
+  if (LOOKS[id]) return LOOKS[id];
+  let h = 0; const s = id+'aura';
+  for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i))>>>0;
+  const skins = ['#f0d3b8','#e0b590','#c68e5a','#a9713f','#7c4a24','#f5e0cf'];
+  const hairs = ['#2b2340','#4a2f1d','#7a4a21','#14141c','#8a8f9a','#b5651d','#d8b04a','#5a2b2b'];
+  const l = { skin:skins[h%skins.length], hair:hairs[(h>>3)%hairs.length], hs:(h>>6)%4, blink:((h>>4)%97)/97*6.28, shade:((h>>8)%3) };
+  LOOKS[id] = l; return l;
+}
+const GROUP_COLS = ['#4e79d4','#d46a4e','#57b06a','#b05aa8','#c2a13c','#5aa8b0','#8a6ad4','#b0685a','#6ab058','#a85a78','#5a78b0','#b09a5a','#7a5ab0','#b05a5a','#5ab093','#8f5ab0','#b0785a','#5a9ab0','#a0b05a','#b05a86'];
+function drawNPC(d, n, t){
+  const husked = n.state==='husk', rec = n.state==='recover';
+  const depth = clamp((n.y-playTop())/(playBot()-playTop()), 0, 1);
+  const sc = 0.78 + 0.5*depth;
+  const bobY = husked ? 0 : Math.sin(t*1.7 + n.bob)*2.5;
+  const l = lookOf(d.id);
   const gi = GROUPS.indexOf(d.group);
-  const bodyCols = ['#4e79d4','#d46a4e','#57b06a','#b05aa8','#c2a13c','#5aa8b0','#8a6ad4','#b0685a','#6ab058','#a85a78'];
-  ctx.fillStyle = husked ? '#4a4756' : bodyCols[gi % bodyCols.length];
-  ctx.beginPath(); ctx.ellipse(n.x, y+6, 13, 16, 0, 0, 6.283); ctx.fill();
+  let outfit = GROUP_COLS[gi % GROUP_COLS.length];
+  if (l.shade===1) outfit = blend(outfit,'#000000',0.18);
+  if (l.shade===2) outfit = blend(outfit,'#ffffff',0.15);
+
+  ctx.save();
+  ctx.translate(n.x, n.y + bobY);
+  ctx.scale(sc, sc);
+
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,.30)';
+  ctx.beginPath(); ctx.ellipse(0, 27, 13, 4.2, 0, 0, 6.283); ctx.fill();
+
+  // aura glow (emotion-colored)
+  const emoKey = emotionOf(n.v, n.i);
+  const emo = EMOTIONS[emoKey];
+  if (!husked) {
+    const pulse = 1 + 0.5*Math.sin(t * (2 + n.i*9));
+    const rr = 26 + n.i*14 + pulse*2.5;
+    const alpha = rec ? 0.10 : 0.15 + n.i*0.42;
+    const grad = ctx.createRadialGradient(0, -2, 6, 0, -2, rr);
+    grad.addColorStop(0, 'rgba('+emo.rgb+','+alpha+')');
+    grad.addColorStop(1, 'rgba('+emo.rgb+',0)');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, -2, rr, 0, 6.283); ctx.fill();
+    if (n.peak > 0) { // peak ring counts down
+      ctx.strokeStyle = 'rgba(255,255,255,'+(0.5+0.4*Math.sin(t*12))+')';
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -2, rr+3, 0, 6.283*(n.peak/n.peakDur)); ctx.stroke();
+      for (let sp=0; sp<3; sp++){ // orbiting sparkles
+        const a2 = t*3 + sp*2.094;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(Math.cos(a2)*(rr+3), -2+Math.sin(a2)*(rr+3), 1.8, 0, 6.283); ctx.fill();
+      }
+    }
+  }
+
+  const walking = n.moving && !husked;
+  const wp = t*9 + n.bob;
+  const sw = walking ? Math.sin(wp)*4.5 : 0;
+
+  // legs
+  {
+    ctx.strokeStyle = husked ? '#3f3c4a' : blend(outfit,'#000000',0.42);
+    ctx.lineWidth = 4.4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-4.5, 12); ctx.lineTo(-4.5 + sw, 24); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4.5, 12); ctx.lineTo(4.5 - sw, 24); ctx.stroke();
+    ctx.lineCap = 'butt';
+  }
+  // torso
+  ctx.fillStyle = husked ? '#4a4756' : outfit;
+  ctx.beginPath(); ctx.ellipse(0, 4, 11.5, 13.5, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.18)';
+  ctx.beginPath(); ctx.ellipse(0, 9, 11.5, 8, 0, 0, Math.PI); ctx.fill();
+  // arms
+  ctx.strokeStyle = husked ? '#413e4e' : blend(outfit,'#000000',0.25);
+  ctx.lineWidth = 3.6; ctx.lineCap = 'round';
+  const asw = walking ? Math.sin(wp+Math.PI)*3.5 : 0;
+  ctx.beginPath(); ctx.moveTo(-9.5, -2); ctx.lineTo(-11.5 + asw, 9); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(9.5, -2); ctx.lineTo(11.5 - asw, 9); ctx.stroke();
+  ctx.lineCap = 'butt';
   // head
-  ctx.fillStyle = husked ? '#5c5968' : '#f0d3b8';
-  ctx.beginPath(); ctx.arc(n.x, y-12, 10, 0, 6.283); ctx.fill();
+  ctx.fillStyle = husked ? '#5c5968' : l.skin;
+  ctx.beginPath(); ctx.arc(0, -12, 9.5, 0, 6.283); ctx.fill();
+  // hair
+  if (!husked) {
+    ctx.fillStyle = l.hair;
+    if (l.hs===0) { // short cap
+      ctx.beginPath(); ctx.arc(0, -13.5, 9.5, Math.PI*1.05, Math.PI*1.95); ctx.closePath(); ctx.fill();
+    } else if (l.hs===1) { // long
+      ctx.beginPath(); ctx.arc(0, -13.5, 9.7, Math.PI*1.02, Math.PI*1.98); ctx.closePath(); ctx.fill();
+      ctx.fillRect(-9.4, -14, 3.4, 12); ctx.fillRect(6.0, -14, 3.4, 12);
+    } else if (l.hs===2) { // bun
+      ctx.beginPath(); ctx.arc(0, -13.5, 9.5, Math.PI*1.05, Math.PI*1.95); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -23, 4, 0, 6.283); ctx.fill();
+    } else { // spiky
+      ctx.beginPath(); ctx.arc(0, -13.5, 9.3, Math.PI*1.05, Math.PI*1.95); ctx.closePath(); ctx.fill();
+      for (let s2=-1; s2<=1; s2++){
+        ctx.beginPath(); ctx.moveTo(s2*5-2.4, -20); ctx.lineTo(s2*5, -26.5); ctx.lineTo(s2*5+2.4, -20); ctx.closePath(); ctx.fill();
+      }
+    }
+  } else {
+    // cracks
+    ctx.strokeStyle = '#3a3746'; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(-3,-20); ctx.lineTo(-1.4,-16); ctx.lineTo(-3.4,-13); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4,-19); ctx.lineTo(3,-15.4); ctx.lineTo(5,-12.6); ctx.stroke();
+  }
   // face
-  ctx.fillStyle = husked ? '#39364a' : '#2b2340';
-  ctx.beginPath(); ctx.arc(n.x-3.5, y-13, husked?2.2:1.6, 0, 6.283); ctx.fill();
-  ctx.beginPath(); ctx.arc(n.x+3.5, y-13, husked?2.2:1.6, 0, 6.283); ctx.fill();
-  if (!husked) { // mouth curve by valence
-    ctx.strokeStyle = '#2b2340'; ctx.lineWidth = 1.4; ctx.beginPath();
-    const m = n.v*3.5;
-    ctx.moveTo(n.x-4, y-8); ctx.quadraticCurveTo(n.x, y-8+m, n.x+4, y-8); ctx.stroke();
-  } else { ctx.strokeStyle='#39364a'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(n.x-3,y-8); ctx.lineTo(n.x+3,y-8); ctx.stroke(); }
+  const inkCol = husked ? '#39364a' : '#2b2340';
+  const blinking = Math.sin(t*1.1 + l.blink) > 0.984;
+  ctx.fillStyle = inkCol; ctx.strokeStyle = inkCol;
+  if (blinking && !husked) {
+    ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(-5.2,-13); ctx.lineTo(-2,-13); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(2,-13); ctx.lineTo(5.2,-13); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(-3.5, -13, husked?2.2:1.6, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(3.5, -13, husked?2.2:1.6, 0, 6.283); ctx.fill();
+  }
+  // brows tell the mood
+  if (!husked) {
+    ctx.lineWidth = 1.4;
+    if (n.v < -0.25 && n.i > 0.5) { // anger: inner ends down
+      ctx.beginPath(); ctx.moveTo(-5.6,-17.4); ctx.lineTo(-1.6,-15.6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(5.6,-17.4); ctx.lineTo(1.6,-15.6); ctx.stroke();
+    } else if (n.v < -0.25) { // sadness: outer ends down
+      ctx.beginPath(); ctx.moveTo(-5.6,-15.6); ctx.lineTo(-1.6,-17.2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(5.6,-15.6); ctx.lineTo(1.6,-17.2); ctx.stroke();
+    } else if (n.v > 0.5) { // lifted
+      ctx.beginPath(); ctx.moveTo(-5.4,-17.6); ctx.lineTo(-1.8,-17.9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(5.4,-17.6); ctx.lineTo(1.8,-17.9); ctx.stroke();
+    }
+  }
+  // mouth
+  if (!husked) {
+    if (n.v > 0.5 && n.i > 0.7) { // open delight
+      ctx.fillStyle = inkCol;
+      ctx.beginPath(); ctx.ellipse(0, -7.4, 2.6, 3.1, 0, 0, 6.283); ctx.fill();
+    } else {
+      ctx.lineWidth = 1.4; ctx.beginPath();
+      const m2 = n.v*3.5;
+      ctx.moveTo(-4, -8); ctx.quadraticCurveTo(0, -8+m2, 4, -8); ctx.stroke();
+    }
+  } else { ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(-3,-8); ctx.lineTo(3,-8); ctx.stroke(); }
+
+  // charge ring
+  if (!husked) {
+    const cr = 20;
+    ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(255,255,255,.13)';
+    ctx.beginPath(); ctx.arc(0, -4, cr, 0, 6.283); ctx.stroke();
+    ctx.strokeStyle = n.peak>0 && Math.sin(t*14)>0 ? '#fff' : emo.c;
+    ctx.beginPath(); ctx.arc(0, -4, cr, -1.5708, -1.5708 + 6.283*Math.min(1,n.i)); ctx.stroke();
+    ctx.lineCap = 'butt';
+    if (n.peak > 0 && n.state==='idle') {
+      ctx.fillStyle = '#fff'; ctx.font = '900 14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('⚡', 0, -32 - 2.5*Math.sin(t*10));
+    }
+  }
   // selected marker
   if (selected===d.id) {
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.setLineDash([4,4]);
-    ctx.beginPath(); ctx.arc(n.x, y, 28, t%6.283, t%6.283+6.283); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(0, -2, 29, t%6.283, t%6.283+6.283); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='#fff'; ctx.font='700 11px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(d.name, n.x, y-42);
+    ctx.fillText(d.name, 0, -44);
   }
-  if ((run.upgrades.sight || hasTrait(d.id,'openbook')) && !husked) {
-    ctx.fillStyle = n.peak>0?'#fff':'#cfc6ee'; ctx.font='700 10px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(Math.round(n.i*100)+'%', n.x, y+30);
+  // readouts
+  if (!husked) {
+    if (run.upgrades.sight || hasTrait(d.id,'openbook')) {
+      ctx.fillStyle = n.peak>0?'#fff':'#cfc6ee'; ctx.font='700 10px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(Math.round(n.i*100)+'%', 0, 34);
+    }
+    if (relic('prism') && n.i>0.45) {
+      ctx.font='11px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(emo.icon, 0, run.upgrades.sight||hasTrait(d.id,'openbook') ? 46 : 34);
+    }
   }
-  if (rec) { ctx.fillStyle='#8effc1'; ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.fillText('💤 '+Math.ceil(n.recoverT), n.x, y+30); }
+  if (rec) { ctx.fillStyle='#8effc1'; ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.fillText('💤 '+Math.ceil(n.recoverT), 0, 34); }
+  ctx.restore();
 }
+
+/* ---------------- Mara rendering ---------------- */
+function drawMara(m, t){
+  const depth = clamp((m.y-playTop())/(playBot()-playTop()), 0, 1);
+  const sc = 0.82 + 0.5*depth;
+  const hover = Math.sin(t*2.1)*3;
+  ctx.save();
+  ctx.translate(m.x, m.y + hover);
+  ctx.scale(sc, sc);
+  if (m.stunT>0) ctx.globalAlpha = 0.55;
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(0, 30-hover*0.6, 15, 4.5, 0, 0, 6.283); ctx.fill();
+  // smoky aura
+  const ag = ctx.createRadialGradient(0,-4,4,0,-4,34);
+  ag.addColorStop(0,'rgba(120,110,160,.30)'); ag.addColorStop(1,'rgba(120,110,160,0)');
+  ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0,-4,34,0,6.283); ctx.fill();
+  // cloak
+  const cg = ctx.createLinearGradient(0,-28,0,26);
+  cg.addColorStop(0,'#3d3a52'); cg.addColorStop(1,'#232030');
+  ctx.fillStyle = cg;
+  ctx.beginPath();
+  ctx.moveTo(0,-28);
+  ctx.bezierCurveTo(-13,-24,-14,-6,-16,14);
+  ctx.quadraticCurveTo(-12,10+Math.sin(t*3)*2,-8,18);
+  ctx.quadraticCurveTo(-4,12,0,20);
+  ctx.quadraticCurveTo(4,12,8,18);
+  ctx.quadraticCurveTo(12,10+Math.cos(t*3)*2,16,14);
+  ctx.bezierCurveTo(14,-6,13,-24,0,-28);
+  ctx.fill();
+  // hood opening
+  ctx.fillStyle = '#0d0b16';
+  ctx.beginPath(); ctx.ellipse(0,-15,7,8.4,0,0,6.283); ctx.fill();
+  // ember eyes
+  const gl = 0.6+0.4*Math.sin(t*5);
+  ctx.fillStyle = 'rgba(255,141,92,'+gl+')';
+  ctx.beginPath(); ctx.arc(-2.8,-15,1.5,0,6.283); ctx.fill();
+  ctx.beginPath(); ctx.arc(2.8,-15,1.5,0,6.283); ctx.fill();
+  ctx.globalAlpha = 1;
+  if (m.stunT>0) { ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('💢', 0, -36); }
+  else if (m.target) { ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#b9a9e8'; ctx.fillText('🩶 Mara', 0, -36); }
+  ctx.restore();
+  // ambient smoke
+  if (Math.random()<dtGlobal*4) particles.push({ x:m.x+rnd(-8,8), y:m.y+rnd(0,16), vx:rnd(-6,6), vy:rnd(-18,-8), life:rnd(.6,1.2), t:0, color:'rgba(140,130,170,.5)', r:rnd(2,3.6) });
+}
+function drawTether(t){
+  const m = run.mara, n = run.npcs[m.target];
+  if (!n) return;
+  const mx2 = (n.x+m.x)/2, my2 = Math.min(n.y,m.y)-30;
+  ctx.strokeStyle = 'rgba(185,169,232,.6)';
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([5,6]); ctx.lineDashOffset = -t*26;
+  ctx.beginPath(); ctx.moveTo(n.x, n.y-14);
+  ctx.quadraticCurveTo(mx2, my2, m.x, m.y-12);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
 function drawParticles(){
   for (let i=particles.length-1; i>=0; i--) {
     const p = particles[i]; p.t += dtGlobal;
     if (p.t >= p.life) { particles.splice(i,1); continue; }
     const a = 1 - p.t/p.life;
-    p.x += p.vx*dtGlobal; p.y += p.vy*dtGlobal; p.vy += 40*dtGlobal;
-    if (p.txt) {
+    if (p.home) {
+      const dx = 28-p.x, dy = 36-p.y, dist = Math.hypot(dx,dy)||1;
+      if (dist < 26) { particles.splice(i,1); continue; }
+      p.vx = p.vx*0.92 + (dx/dist)*640*dtGlobal;
+      p.vy = p.vy*0.92 + (dy/dist)*640*dtGlobal;
+      p.x += p.vx*dtGlobal; p.y += p.vy*dtGlobal;
+      ctx.globalAlpha = 0.85; ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r*2.4, 0, 6.283); ctx.fill();
+    } else if (p.wisp) {
+      const k = p.t/p.life;
+      p.x = p.sx + p.dx*k + Math.sin(k*9)*6;
+      p.y = p.sy + p.dy*k;
+      ctx.globalAlpha = a*0.8; ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+    } else if (p.txt) {
+      p.x += p.vx*dtGlobal; p.y += p.vy*dtGlobal;
       ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.font = '800 16px sans-serif'; ctx.textAlign='center';
       ctx.fillText(p.txt, p.x, p.y);
     } else {
+      p.x += p.vx*dtGlobal; p.y += p.vy*dtGlobal; p.vy += 40*dtGlobal;
       ctx.globalAlpha = a*0.9; ctx.fillStyle = p.color;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
     }
