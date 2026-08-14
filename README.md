@@ -24,7 +24,8 @@ What you capture depends on where you steered the feeling: mild lifts give **Hop
 
 ## A living world
 
-- **🩶 Mara the Gray** — the Broker's other harvester arrives on day 3. She siphons whatever you leave ripening; tap her to flare your aura and drive her off.
+- **🩶 Mara the Gray** — the Broker's other harvester arrives on day 3, and she escalates: *prowling* at first, *bold* from day 6 (faster siphons, peak-window sniping), *ravenous* from day 10 — when she'll attempt a **deep drain** that husks a soul outright unless you break it within 8 seconds.
+- **✉️ Morning letters** — the Broker writes every dawn, and the letters answer how you actually farm: praise for flawless contract days, dark approval for reapers, puzzled respect for luminaries, essence-market gossip. The husked leave unsigned grief notes; the healed send thanks. From day 5, Mara slips **bargains** under the door — pay tribute for a quiet day, strike a joint hunt for half her take, or sell her your husks (the gloom leaves with them, but the trade stains your ledger as Blight).
 - **68 souls across six venues** — Dawnlight Park, The Neon Cellar, Grindstone Offices, The Night Market, The Velvet Chapel, Skyline Rooftop — each with its own emotional physics (the chapel swings from wedding light to the wake; the market's mood is a pendulum). Each remembers how you farmed it (bloom / blight / turbulence).
 - **Traits** — every NPC has learnable emotional patterns (Sunny, Spirally, Guarded, Deep Well…). Read someone through interaction and the knowledge is yours forever.
 - **Daily weather + venue events** — Grey Drizzle, Birthday Night, The Vows, Meteor Shower… each morning changes where the best harvest is.

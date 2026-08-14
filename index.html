@@ -168,6 +168,13 @@
   .mileRow { display:flex; gap:9px; align-items:center; padding:7px 4px; border-bottom:1px solid rgba(255,255,255,.06); font-size:12.5px; }
   .mileRow .mi { width:22px; text-align:center; }
   .mileRow.lock { opacity:.4; }
+  .letterCard { background:linear-gradient(175deg,#2a2244,#1a1430 70%); border:1px solid rgba(255,215,94,.28); border-radius:10px; padding:18px 16px 14px; margin:6px 0 4px; position:relative; box-shadow:0 6px 24px rgba(0,0,0,.45), inset 0 0 40px rgba(255,215,94,.03); }
+  .letterCard::before { content:'🖋️'; position:absolute; top:-13px; right:14px; font-size:20px; filter:drop-shadow(0 2px 4px #000); }
+  .letterCard .lfrom { font-size:10.5px; font-weight:900; letter-spacing:2.5px; text-transform:uppercase; color:#c9b78a; margin-bottom:8px; }
+  .letterCard .lbody { font-size:13.5px; line-height:1.65; color:#e6dfd2; font-style:italic; }
+  .letterCard .lsig { text-align:right; margin-top:10px; font-size:13px; color:#c9b78a; font-weight:700; }
+  .bargainBox { margin-top:12px; padding:11px 12px; border-radius:10px; background:rgba(176,107,255,.08); border:1px dashed rgba(176,107,255,.45); font-size:12.5px; line-height:1.5; font-style:normal; color:#ddd0f0; }
+  .bargainBox .bt { font-weight:900; letter-spacing:1px; color:#d9b8ff; font-size:11px; margin-bottom:4px; }
   .essRow { display:flex; align-items:center; gap:7px; margin:3px 0; font-size:11.5px; }
   .essRow .el { width:64px; opacity:.8; font-weight:700; }
   .essRow .eb { flex:1; height:8px; border-radius:4px; background:rgba(255,255,255,.07); overflow:hidden; }
@@ -231,8 +238,10 @@
 <script>
 'use strict';
 /* =========================================================
-   AURA FARM v4 — harvest emotional energy. Radiance vs Blight.
-   Six essences, Broker contracts, relics, Mara the Gray.
+   AURA FARM v5 — harvest emotional energy. Radiance vs Blight.
+   Six essences, Broker contracts, relics, Mara the Gray
+   (now escalating: bold peak-sniping, deep drains, bargains),
+   and morning letters that answer how you farm.
    ========================================================= */
 
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
@@ -515,6 +524,7 @@ function newRun(){
     essBy:emoZero(), dayEss:emoZero(), dayDistinct:{}, dayPeakN:0,
     contracts:[], contractsDone:0, dayContractsDone:0,
     mara:null, stolen:0, dayStolen:0,
+    maraOffDay:0, maraDeal:null, maraDeepUsed:false, dayShoos:0, dayHuskedNames:[], jointF:0,
     zones, unlocked,
     owned:{ hype:true, snide:true }, upgrades:{} };
 }
@@ -527,7 +537,8 @@ function migrateRun(r){ // fill fields missing from older saves
   const fresh = { dayRad:0, dayBli:0, dayBest:null, combo:0, maxCombo:0, lastSign:0, history:[], qMet:false,
     weather:'clear', event:null, veilT:0, arts:{}, artCd:{},
     essBy:emoZero(), dayEss:emoZero(), dayDistinct:{}, dayPeakN:0,
-    contracts:[], contractsDone:0, dayContractsDone:0, mara:null, stolen:0, dayStolen:0, dayLen:dayLenFor() };
+    contracts:[], contractsDone:0, dayContractsDone:0, mara:null, stolen:0, dayStolen:0, dayLen:dayLenFor(),
+    maraOffDay:0, maraDeal:null, maraDeepUsed:false, dayShoos:0, dayHuskedNames:[], jointF:0 };
   for (const k in fresh) if (r[k]===undefined) r[k] = fresh[k];
   for (const v of VENUES) {
     if (!r.zones[v.id]) r.zones[v.id] = { total:0, rad:0, bli:0, bloomed:null };
@@ -913,7 +924,8 @@ function harvest(){
   if (sign>0) { sfx.harvR(); flashFx('rgba('+EMOTIONS[emo].rgb+',.35)');
     n.state='recover'; n.recoverT = 28/def.res * (hasTrait(def.id,'resilient')?0.5:1) * (relic('locket')?0.75:1); n.i = 0; n.v *= 0.5; n.peak = 0; }
   else { sfx.harvB(); flashFx('rgba(110,30,170,.5)'); shakeFx();
-    n.state='husk'; n.i = 0; n.peak = 0; toast(def.name+' goes quiet. They won’t feel again this run.'); }
+    n.state='husk'; n.i = 0; n.peak = 0; run.dayHuskedNames.push(def.name);
+    toast(def.name+' goes quiet. They won’t feel again this run.'); }
 
   checkBloom(def.venue);
   renderPanel(); updateHud();
@@ -941,50 +953,85 @@ function moveToward(o, tx, ty, step){
   o.x += dx/dist*Math.min(step,dist); o.y += dy/dist*Math.min(step,dist);
   return dist < 6;
 }
+/* Mara grows bolder as the run goes on. */
+function maraTier(){ return run.day<6 ? 0 : run.day<10 ? 1 : 2; }
+const MARA_TIERS = [
+  { n:'prowling',  rate:1.0, speed:44, shooCost:15, stun:12, aura:'120,110,160' },
+  { n:'bold',      rate:1.4, speed:52, shooCost:20, stun:10, aura:'150,110,200' },
+  { n:'ravenous',  rate:1.8, speed:60, shooCost:25, stun:8,  aura:'200,110,140' },
+];
 function ensureMara(){
-  if (run.day < 3) { run.mara = null; return; }
-  if (!run.mara) run.mara = { x:W*0.92, y:playTop()+40, tx:W*0.5, ty:(playTop()+playBot())/2, stunT:0, target:null, siphonT:0, cd:3, wanderT:0 };
+  if (run.day < 3 || run.maraOffDay===run.day) { run.mara = null; return; }
+  if (!run.mara) run.mara = { x:W*0.92, y:playTop()+40, tx:W*0.5, ty:(playTop()+playBot())/2, stunT:0, target:null, siphonT:0, cd:3, wanderT:0, deep:0 };
 }
 function updateMara(dt){
   ensureMara();
   const m = run.mara; if (!m) return;
+  const T = MARA_TIERS[maraTier()];
   if (m.stunT > 0) {
-    m.stunT -= dt; m.target = null;
+    m.stunT -= dt; m.target = null; m.deep = 0;
     moveToward(m, W-70, playTop()+50, 70*dt);
     return;
   }
   if (m.cd > 0) m.cd -= dt;
+  // deep drain channel (ravenous only): she tries to husk someone outright
+  if (m.deep > 0) {
+    const n = m.target && run.npcs[m.target], d = m.target && npcDef(m.target);
+    if (!n || n.state!=='idle' || d.venue!==run.venue) { m.deep = 0; m.target = null; return; }
+    m.deep -= dt;
+    if (Math.random() < dt*5) siphonWisp(n.x, n.y-14, m.x, m.y-10);
+    if (m.deep <= 0) {
+      n.state='husk'; n.i = 0; n.peak = 0;
+      run.maraDeepUsed = true; m.target = null; m.cd = 10;
+      shakeFx(); sfx.harvB();
+      banner('MARA TAKES '+d.name.toUpperCase(), '<span class="sub2">HUSKED — HER HARVEST, NOT YOURS</span>', '#c9a0b8');
+      toast('🩶 Mara drains '+d.name+' to a husk. She bows, mockingly.');
+      if (selected===d.id) renderPanel();
+    }
+    return;
+  }
   // validate target
   if (m.target) {
     const n = run.npcs[m.target], d = npcDef(m.target);
     if (!n || n.state!=='idle' || d.venue!==run.venue || n.i < 0.1) { m.target = null; m.siphonT = 0; }
   }
-  // acquire: the juiciest idle aura you haven't claimed
+  // acquire: the juiciest idle aura — bold Mara snipes peak windows first
   if (!m.target && m.cd <= 0) {
-    let best = null, bi = 0.35;
+    let best = null, bs = 0.35;
     for (const d of ROSTER) {
       if (d.venue!==run.venue) continue;
       const n = run.npcs[d.id];
-      if (n.state==='idle' && n.i > bi && d.id!==selected) { bi = n.i; best = d.id; }
+      if (n.state!=='idle' || d.id===selected) continue;
+      const score = n.i + (maraTier()>=1 && n.peak>0 ? 0.5 : 0);
+      if (score > bs) { bs = score; best = d.id; }
     }
     m.target = best; m.siphonT = 0;
   }
   if (m.target) {
     const n = run.npcs[m.target];
     const dist = Math.hypot(n.x-m.x, n.y-m.y);
-    if (dist > 48) moveToward(m, n.x+26, n.y-6, 44*dt);
-    else {
+    if (dist > 48) moveToward(m, n.x+26, n.y-6, T.speed*dt);
+    else if (maraTier()>=2 && !run.maraDeepUsed && n.i >= 0.6) {
+      // she coils for a deep drain — 8 seconds to stop her
+      m.deep = 8;
+      banner('MARA DEEP-DRAINS '+npcDef(m.target).name.toUpperCase(), '<span class="sub2">⚠ TAP HER WITHIN 8s OR THEY HUSK</span>', '#ff8da8');
+      sfx.heartbeat();
+    } else {
       m.siphonT += dt;
-      const rate = 0.055 * (relic('mirror')?0.6:1);
+      const rate = 0.055 * T.rate * (relic('mirror')?0.6:1) * (run.maraDeal==='joint'?1.6:1);
       const take = Math.min(Math.max(0, n.i-0.08), rate*dt);
       if (take > 0) {
         n.i -= take;
         run.stolen += take*100; run.dayStolen += take*100;
+        if (run.maraDeal==='joint') { // her cut flows back to you
+          run.jointF += take*50;
+          if (run.jointF >= 1) { const whole = Math.floor(run.jointF); run.jointF -= whole; run.essence += whole; }
+        }
         if (Math.random() < dt*2.5) siphonWisp(n.x, n.y-14, m.x, m.y-10);
       }
       if (n.i <= 0.1) {
         if (Math.random()<0.5) toast('🩶 Mara drinks '+npcDef(m.target).name+'’s aura down to embers.');
-        m.target = null; m.cd = 8; m.siphonT = 0;
+        m.target = null; m.cd = Math.max(4, 8-run.day*0.3); m.siphonT = 0;
       }
     }
   } else {
@@ -997,13 +1044,17 @@ function updateMara(dt){
 }
 function shooMara(){
   const m = run.mara; if (!m || m.stunT>0) return;
-  if (run.focus < 15) { toast('Too drained to flare your aura (needs 15 focus).'); return; }
-  run.focus -= 15;
-  m.stunT = 12; m.target = null; m.siphonT = 0;
+  const T = MARA_TIERS[maraTier()];
+  if (run.focus < T.shooCost) { toast('Too drained to flare your aura (needs '+T.shooCost+' focus).'); return; }
+  run.focus -= T.shooCost;
+  const wasDeep = m.deep > 0;
+  if (wasDeep) run.maraDeepUsed = true; // interrupted, she won't try again today
+  m.stunT = T.stun; m.target = null; m.siphonT = 0; m.deep = 0;
   meta.maraShoos = (meta.maraShoos||0)+1; saveMeta();
+  run.dayShoos++;
   if (meta.maraShoos >= 5) mile('shoo5');
   sfx.shoo(); burst(m.x, m.y, '#cfd2ff', 14);
-  toast('You flare your aura. Mara hisses and backs off — 12s.');
+  toast(wasDeep ? '⚡ You break Mara’s deep drain. She shrieks and backs off.' : 'You flare your aura. Mara hisses and backs off — '+T.stun+'s.');
 }
 
 /* ---------------- simulation ---------------- */
@@ -1037,6 +1088,7 @@ function update(dt){
   const dp = 1 - run.dayT/run.dayLen;
   for (const d of ROSTER) {
     const n = run.npcs[d.id];
+    if (n.state==='taken') continue; // sold to Mara — gone from the world
     const inCur = d.venue === cur;
     if (n.state==='recover') {
       n.recoverT -= dt * (inCur?1:0.6);
@@ -1104,7 +1156,7 @@ function update(dt){
   }
 
   // keep people from standing inside each other
-  const curNpcs = ROSTER.filter(d=>d.venue===cur).map(d=>run.npcs[d.id]);
+  const curNpcs = ROSTER.filter(d=>d.venue===cur).map(d=>run.npcs[d.id]).filter(n=>n.state!=='taken');
   for (let a=0; a<curNpcs.length; a++) for (let b=a+1; b<curNpcs.length; b++) {
     const A = curNpcs[a], B = curNpcs[b];
     const dx = B.x-A.x, dy = B.y-A.y, dist = Math.hypot(dx,dy) || 0.01;
@@ -1172,14 +1224,129 @@ function endDay(){
   `, true, true);
 }
 function nextDay(){
+  // snapshot yesterday for the Broker's morning letter
+  const prev = {
+    contractsDone: run.dayContractsDone, shoos: run.dayShoos, stolen: Math.round(run.dayStolen),
+    ess: Object.assign({}, run.dayEss), rad: run.dayRad, bli: run.dayBli,
+    husked: run.dayHuskedNames.slice(),
+  };
   run.day++; run.dayLen = dayLenFor(); run.dayT = run.dayLen; run.dayEarned = 0; run.focus = focusCap();
   run.dayRad = 0; run.dayBli = 0; run.dayBest = null; run.combo = 0; run.qMet = false;
   run.dayEss = emoZero(); run.dayDistinct = {}; run.dayPeakN = 0; run.dayStolen = 0;
+  run.dayShoos = 0; run.dayHuskedNames = []; run.maraDeal = null; run.maraDeepUsed = false; run.jointF = 0;
   banner('DAY '+run.day, '<span class="sub2">QUOTA ✦'+quotaFor(run.day)+' BEFORE DUSK</span>');
   for (const d of ROSTER) { const n = run.npcs[d.id];
     if (n.state==='recover') { n.recoverT = Math.max(0, n.recoverT - 20); if (n.recoverT<=0){ n.state='idle'; n.i=0.05; } } }
   rollDay();
   saveRun(); saveMeta(); closeModal();
+  showLetter(composeLetter(prev));
+}
+
+/* ---------------- the Broker's morning letters ---------------- */
+let pendingBargain = null;
+function composeLetter(prev){
+  const d = run.day;
+  const purity = run.rad + run.bli > 0 ? run.rad/(run.rad+run.bli) : 0.5;
+  const huskCount = ROSTER.filter(x=>run.npcs[x.id].state==='husk').length;
+  let from = 'The Broker', body = '', sig = '— B.';
+  if (d===2) {
+    body = 'A promising first dusk. Remember the terms: the quota is not a suggestion, and the contracts are where the real money sleeps. Fulfill the hard ones and I will part with things I should not part with — relic things, old things. Do not disappoint me.';
+  } else if (d===3) {
+    body = 'A courtesy, before you hear it from the crowds: I employ another harvester. Mara works the same fields you do, and she does not knock. What ripens unpicked, she drinks. Consider her a lesson in punctuality — or flare your aura at her and see how she takes it.';
+  } else if (d===LAST_DAY) {
+    body = 'The last dusk comes tonight. Fourteen days of feelings pass through my ledgers because of you. Whatever you are by now — luminary, reaper, or something conveniently gray — finish loudly. The trade remembers endings, nothing else.';
+  } else if (prev.husked.length && Math.random()<0.55) {
+    const name = prev.husked[0];
+    const g = ROSTER.find(x=>x.name===name);
+    from = g ? g.group : 'Unsigned';
+    body = 'We know what you did to '+name+'. They stand where you left them and the wind goes through them like an empty doorway. We see you coming now, harvester. We talk. Whatever you tell yourself you are — we bury what you leave.';
+    sig = '— no signature, pressed hard into the paper';
+  } else if (prev.contractsDone>=3) {
+    body = 'All three contracts, fulfilled before dusk. I showed your ledger to people whose names would frighten you, and even they raised an eyebrow. Enclosed: a token of professional respect. Spend it on something sharp.';
+    sig = '— B. (enclosed: ✦60)';
+    run.essence += 60;
+  } else if (prev.shoos>=2) {
+    from = 'Mara';
+    body = 'Twice yesterday you flared that little light of yours at me. Cute. The Broker pays me by the drop, same as you, and there are only so many drops in a day. Keep your fields picked, and I will have no reason to visit them. Leave them ripening, and I will keep my thermos full.';
+    sig = '— M.';
+  } else if (prev.bli===0 && prev.rad>300 && Math.random()<0.5) {
+    const recovered = ROSTER.filter(x=>{ const s = run.npcs[x.id].state; return s!=='husk' && s!=='taken'; });
+    from = recovered.length ? pick(recovered).name : 'A stranger';
+    body = 'I do not know what you did to me yesterday, exactly. I only know I went home lighter than I have in years, and slept without dreaming, and woke up wanting to be somewhere. Whoever you are — thank you. Come back any time.';
+    sig = '— '+from;
+  } else if (purity>=0.8 && d>=5) {
+    body = 'Your ledgers confuse my accountants. All this light, all this patience — and the essence still flows. I built this trade on the assumption that kindness does not scale. You are making me look bad, and making me money. Continue, I suppose.';
+  } else if (purity<=0.2 && d>=5) {
+    body = 'The husks are stacking up nicely — '+huskCount+' at last count. My buyers adore the dark vintages; they say despair keeps longer than joy. But a professional note: empty fields feed no one. Even a reaper leaves seed corn. Pace yourself.';
+  } else {
+    const domK = EMO_KEYS.reduce((a,b)=>prev.ess[a]>=prev.ess[b]?a:b);
+    if (prev.ess[domK] >= 150) {
+      const e = EMOTIONS[domK];
+      const lines = {
+        joy:'Yesterday’s shipment was nearly all Joy. It fetched a fine price from a gray little city that has forgotten the taste.',
+        hope:'Hope, mostly, in yesterday’s crates. Hope sells slowly but it never spoils. The patient buyers found you.',
+        awe:'Awe. Actual Awe, bottled. I have collectors who have waited years for a vintage like yesterday’s. Bring me more and name your price.',
+        sorrow:'Sorrow moved well yesterday. The theaters buy it by the cask, you know. They water it down for the matinees.',
+        rage:'Yesterday ran hot — Rage in every crate. I sell it to the foundries. Handle it with gloves; it eats through cheap vessels.',
+        dread:'Pure Dread, and plenty of it. I do not ask what my midnight clients do with it, and I advise you to keep the same policy.',
+      };
+      body = lines[domK] + ' The '+e.n+' market watches you now.';
+    } else {
+      body = pick([
+        'The quota rises because the demand rises. Feelings are the only commodity that appreciates when the world gets worse, and the world is being very cooperative lately.',
+        'A buyer asked me yesterday whether my harvester was Radiant or Blighted. I told them the truth: that you were still deciding. They paid extra for the suspense.',
+        'Word of advice from an old hand: watch the peaks. A feeling at its peak is worth ten simmering ones, and the crowds telegraph everything if you learn to read them.',
+      ]);
+    }
+  }
+  // Mara's bargains ride along from day 5
+  let bargain = null;
+  if (d>=5 && Math.random()<0.45) {
+    const options = [
+      { id:'tribute', bt:'THE TRIBUTE', txt:'Pay ✦120 and Mara rests today — your fields, untouched, until dusk.', ok:'Pay ✦120' },
+      { id:'joint',   bt:'THE JOINT HUNT', txt:'Let Mara feed freely today — she siphons 60% faster, but half of every drop she takes flows back to you as essence.', ok:'Shake on it' },
+    ];
+    const husks2 = ROSTER.filter(x=>run.npcs[x.id].state==='husk').length;
+    if (husks2>=2) options.push({ id:'husks', bt:'THE HUSK TRADE', txt:'She will haul away your '+husks2+' husks — ✦90 each, and their gloom goes with them. But trafficking in the emptied stains your ledger as Blight.', ok:'Sell them (✦'+(husks2*90)+')' });
+    bargain = pick(options);
+  }
+  return { from, body, sig, bargain };
+}
+function showLetter(L){
+  pendingBargain = L.bargain || null;
+  const bhtml = L.bargain ? `<div class="bargainBox"><div class="bt">🕸️ MARA’S BARGAIN — ${L.bargain.bt}</div>${L.bargain.txt}</div>` : '';
+  showModal(`
+    <h2>A letter, slipped under the door</h2>
+    <div class="letterCard"><div class="lfrom">From: ${L.from}</div><div class="lbody">${L.body}</div><div class="lsig">${L.sig}</div>${bhtml}</div>
+    ${L.bargain ? `<button class="big" onclick="acceptBargain()">${L.bargain.ok}</button><button class="big ghost" onclick="foldLetter()">Refuse &amp; begin the day</button>`
+                : `<button class="big" onclick="foldLetter()">Fold the letter · begin Day ${run.day}</button>`}
+  `, true, true);
+  sfx.tap();
+}
+function acceptBargain(){
+  const b = pendingBargain; if (!b) return foldLetter();
+  if (b.id==='tribute') {
+    if (run.essence < 120) { toast('You can’t afford the tribute (✦120).'); return; }
+    run.essence -= 120; run.maraOffDay = run.day; run.mara = null;
+    toast('🕯️ Tribute paid. Mara will not walk your fields today.');
+  } else if (b.id==='joint') {
+    run.maraDeal = 'joint';
+    toast('🤝 Joint hunt struck. Half of Mara’s take flows to you until dusk.');
+  } else if (b.id==='husks') {
+    let count = 0;
+    for (const d of ROSTER) { const n = run.npcs[d.id];
+      if (n.state==='husk') { n.state = 'taken'; count++; } }
+    const pay = count*90;
+    run.essence += pay; run.bli += pay; // the trade stains the ledger
+    toast('🩶 Mara hauls away '+count+' husks. +✦'+pay+' — and the stain is yours.');
+    if (selected && run.npcs[selected] && run.npcs[selected].state==='taken') { selected = null; renderPanel(); }
+  }
+  sfx.buy(); saveRun(); updateHud();
+  foldLetter();
+}
+function foldLetter(){
+  pendingBargain = null;
+  closeModal();
   announceDay();
 }
 function gameOver(){
@@ -1550,7 +1717,8 @@ function howTo(back){
   <p><b>Six essences.</b> What you capture depends on where you steered the feeling: mild lifts give <b style="color:#8effc1">Hope 🌿</b>, strong ones <b style="color:#ffd75e">Joy ☀️</b>; a gentle sour gives <b style="color:#6fa8ff">Sorrow 💧</b>, a hot one <b style="color:#ff6b52">Rage 🔥</b>. Push someone euphoric to the very peak for rare <b style="color:#9ef3ff">Awe ✨</b>, or to the very bottom for rare <b style="color:#b06bff">Dread 🕸️</b> — both pay 1.35×.</p>
   <p><b>Timing is the skill.</b> An aura ring pulses faster as feeling builds. At high charge a <b>⚡ peak window</b> opens — harvest inside it for the best specimens. Too early: a weak specimen forever. Too late: the feeling vents to nothing.</p>
   <p><b>📜 The Broker posts 3 contracts each morning</b> — deliver specific essences, land clean captures, chain combos. Payouts are instant; the hardest contracts pay in <b style="color:#9ef3ff">relics</b>, permanent powers kept across every run.</p>
-  <p><b>🩶 Mara the Gray</b> arrives on day 3 — the Broker’s other harvester. She siphons whatever you leave ripening. Tap her to flare your aura and drive her off (15 focus).</p>
+  <p><b>🩶 Mara the Gray</b> arrives on day 3 — the Broker’s other harvester. She siphons whatever you leave ripening; tap her to flare your aura and drive her off. She grows <b>bolder</b> as the run goes on: from day 6 she snipes peak windows, and from day 10 she’ll try a <b style="color:#ff8da8">deep drain</b> — stop her within 8 seconds or she husks someone outright.</p>
+  <p><b>✉️ Letters arrive each morning</b> — the Broker reacts to how you farm, the husked leave notes, and from day 5 Mara slips <b>bargains</b> under the door: tributes, joint hunts, husk trades. Every deal has a price.</p>
   <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. People have learnable <b>traits</b>, days have <b>weather</b> and <b>venue events</b>, and six venues unlock as you push each one to its bloom threshold.</p>
   </div><button class="big" onclick="${back==='title'?'titleScreen()':'closeModal()'}">Got it</button>`, true);
   meta.seenHow = true; saveMeta();
@@ -1599,6 +1767,7 @@ cv.addEventListener('pointerdown', e=>{
   for (const d of ROSTER) {
     if (d.venue!==run.venue) continue;
     const n = run.npcs[d.id];
+    if (n.state==='taken') continue;
     const dx = n.x-x, dy = n.y-y, dist = dx*dx+dy*dy;
     if (dist < bd) { bd = dist; best = d.id; }
   }
@@ -1621,6 +1790,7 @@ function draw(){
   for (const d of ROSTER) {
     if (d.venue!==run.venue) continue;
     const n = run.npcs[d.id];
+    if (n.state==='taken') continue;
     ents.push({ y:n.y, f:()=>drawNPC(d, n, t) });
   }
   if (run.mara) { const m = run.mara; ents.push({ y:m.y, f:()=>drawMara(m, t) }); }
@@ -2160,10 +2330,12 @@ function drawMara(m, t){
   // shadow
   ctx.fillStyle = 'rgba(0,0,0,.3)';
   ctx.beginPath(); ctx.ellipse(0, 30-hover*0.6, 15, 4.5, 0, 0, 6.283); ctx.fill();
-  // smoky aura
-  const ag = ctx.createRadialGradient(0,-4,4,0,-4,34);
-  ag.addColorStop(0,'rgba(120,110,160,.30)'); ag.addColorStop(1,'rgba(120,110,160,0)');
-  ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0,-4,34,0,6.283); ctx.fill();
+  // smoky aura — tinted by how bold she's grown, flaring during a deep drain
+  const tierRgb = MARA_TIERS[maraTier()].aura;
+  const flare = m.deep>0 ? 0.25+0.2*Math.sin(t*10) : 0;
+  const ag = ctx.createRadialGradient(0,-4,4,0,-4,34+flare*30);
+  ag.addColorStop(0,'rgba('+tierRgb+','+(0.30+flare)+')'); ag.addColorStop(1,'rgba('+tierRgb+',0)');
+  ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(0,-4,34+flare*30,0,6.283); ctx.fill();
   // cloak
   const cg = ctx.createLinearGradient(0,-28,0,26);
   cg.addColorStop(0,'#3d3a52'); cg.addColorStop(1,'#232030');
@@ -2187,6 +2359,7 @@ function drawMara(m, t){
   ctx.beginPath(); ctx.arc(2.8,-15,1.5,0,6.283); ctx.fill();
   ctx.globalAlpha = 1;
   if (m.stunT>0) { ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('💢', 0, -36); }
+  else if (m.deep>0) { ctx.fillStyle='#ff8da8'; ctx.font='900 13px sans-serif'; ctx.textAlign='center'; ctx.fillText('⚠ '+Math.ceil(m.deep), 0, -38 - 2*Math.sin(t*9)); }
   else if (m.target) { ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#b9a9e8'; ctx.fillText('🩶 Mara', 0, -36); }
   ctx.restore();
   // ambient smoke
@@ -2196,9 +2369,10 @@ function drawTether(t){
   const m = run.mara, n = run.npcs[m.target];
   if (!n) return;
   const mx2 = (n.x+m.x)/2, my2 = Math.min(n.y,m.y)-30;
-  ctx.strokeStyle = 'rgba(185,169,232,.6)';
-  ctx.lineWidth = 1.6;
-  ctx.setLineDash([5,6]); ctx.lineDashOffset = -t*26;
+  const deep = m.deep>0;
+  ctx.strokeStyle = deep ? 'rgba(255,110,150,'+(0.65+0.3*Math.sin(t*12))+')' : 'rgba(185,169,232,.6)';
+  ctx.lineWidth = deep ? 2.6 : 1.6;
+  ctx.setLineDash([5,6]); ctx.lineDashOffset = -t*(deep?52:26);
   ctx.beginPath(); ctx.moveTo(n.x, n.y-14);
   ctx.quadraticCurveTo(mx2, my2, m.x, m.y-12);
   ctx.stroke();
