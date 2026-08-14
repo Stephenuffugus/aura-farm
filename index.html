@@ -689,12 +689,24 @@ function stopAmbient(){
   } catch(e) {}
   padNodes = null;
 }
+/* Each essence has a signature harvest chord — the ear learns the economy. */
+const ESS_CHORDS = {
+  joy:   [[523,.12,'sine',.08,0],[659,.14,'sine',.07,.06],[784,.22,'sine',.07,.12],[1047,.3,'sine',.05,.18]],
+  hope:  [[440,.14,'triangle',.07,0],[554,.18,'triangle',.06,.09],[659,.28,'sine',.06,.18]],
+  awe:   [[523,.2,'sine',.06,0],[784,.25,'sine',.06,.08],[988,.3,'sine',.05,.16],[1319,.5,'sine',.05,.24],[1568,.6,'sine',.04,.34]],
+  sorrow:[[494,.25,'sine',.07,0],[440,.3,'sine',.06,.14],[392,.5,'sine',.06,.3]],
+  rage:  [[220,.09,'sawtooth',.09,0],[233,.09,'sawtooth',.08,.08],[220,.16,'sawtooth',.08,.16],[110,.3,'sawtooth',.07,.2]],
+  dread: [[196,.4,'sawtooth',.07,0],[277,.5,'sawtooth',.06,.12],[98,.7,'sine',.08,.2]],
+};
 const sfx = {
   tap: ()=>beep(520,0.06,'triangle',0.05),
   act: (dir)=>beep(dir>0?660:240,0.10,dir>0?'triangle':'sawtooth',0.06),
   peak: ()=>{ beep(880,0.15,'sine',0.08); beep(1320,0.2,'sine',0.05,0.08); },
+  harvest: (emo)=>{ for (const p of (ESS_CHORDS[emo]||ESS_CHORDS.joy)) beep(p[0],p[1],p[2],p[3],p[4]); },
   harvR: ()=>{ beep(660,0.12,'sine',0.09); beep(990,0.15,'sine',0.08,0.09); beep(1320,0.25,'sine',0.07,0.18); },
   harvB: ()=>{ beep(320,0.15,'sawtooth',0.09); beep(160,0.3,'sawtooth',0.08,0.1); },
+  sting: ()=>{ beep(110,0.2,'sawtooth',0.09); beep(155.6,0.22,'sawtooth',0.09,0.12); beep(220,0.5,'sawtooth',0.1,0.24); beep(55,0.5,'sine',0.12,0.24); },
+  mara: ()=>{ beep(311,0.16,'triangle',0.06); beep(370,0.16,'triangle',0.06,0.14); beep(311,0.34,'triangle',0.05,0.28); },
   buy: ()=>{ beep(700,0.08,'square',0.05); beep(1050,0.12,'square',0.05,0.07); },
   fail: ()=>{ beep(300,0.3,'sawtooth',0.08); beep(200,0.5,'sawtooth',0.08,0.2); },
   day: ()=>{ beep(523,0.15,'sine',0.07); beep(659,0.15,'sine',0.07,0.12); beep(784,0.3,'sine',0.07,0.24); },
@@ -923,9 +935,9 @@ function harvest(){
   burst(n.x, n.y, EMOTIONS[emo].c, Math.round(10+n.i*22));
   essStream(n.x, n.y, EMOTIONS[emo].c, Math.round(6+n.i*10));
   floatText(n.x, n.y-34, '+'+amt+' '+EMOTIONS[emo].icon, EMOTIONS[emo].c);
-  if (sign>0) { sfx.harvR(); flashFx('rgba('+EMOTIONS[emo].rgb+',.35)');
+  if (sign>0) { sfx.harvest(emo); flashFx('rgba('+EMOTIONS[emo].rgb+',.35)');
     n.state='recover'; n.recoverT = 28/def.res * (hasTrait(def.id,'resilient')?0.5:1) * (relic('locket')?0.75:1); n.i = 0; n.v *= 0.5; n.peak = 0; }
-  else { sfx.harvB(); flashFx('rgba(110,30,170,.5)'); shakeFx();
+  else { sfx.harvest(emo); flashFx('rgba(110,30,170,.5)'); shakeFx();
     n.state='husk'; n.i = 0; n.peak = 0; run.dayHuskedNames.push(def.name);
     toast(def.name+' goes quiet. They won’t feel again this run.'); }
 
@@ -989,7 +1001,10 @@ const MARA_TIERS = [
 ];
 function ensureMara(){
   if (run.day < 3 || run.maraOffDay===run.day) { run.mara = null; return; }
-  if (!run.mara) run.mara = { x:W*0.92, y:playTop()+40, tx:W*0.5, ty:(playTop()+playBot())/2, stunT:0, target:null, siphonT:0, cd:3, wanderT:0, deep:0 };
+  if (!run.mara) {
+    run.mara = { x:W*0.92, y:playTop()+40, tx:W*0.5, ty:(playTop()+playBot())/2, stunT:0, target:null, siphonT:0, cd:3, wanderT:0, deep:0 };
+    if (mode==='play') sfx.mara(); // her little minor-key motif announces her
+  }
 }
 function updateMara(dt){
   ensureMara();
@@ -1042,7 +1057,7 @@ function updateMara(dt){
       // she coils for a deep drain — 8 seconds to stop her
       m.deep = 8;
       banner('MARA DEEP-DRAINS '+npcDef(m.target).name.toUpperCase(), '<span class="sub2">⚠ TAP HER WITHIN 8s OR THEY HUSK</span>', '#ff8da8');
-      sfx.heartbeat();
+      sfx.sting(); sfx.heartbeat();
     } else {
       m.siphonT += dt;
       const rate = 0.055 * T.rate * (relic('mirror')?0.6:1) * (run.maraDeal==='joint'?1.6:1);
