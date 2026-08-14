@@ -29,6 +29,10 @@
   #menuBtns { position:fixed; right:8px; top:calc(env(safe-area-inset-top,0px) + 58px); display:flex; flex-direction:column; gap:8px; z-index:6; }
   .mbtn { width:44px; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(24,20,42,.85); color:#fff; font-size:20px; cursor:pointer; }
   .mbtn:active { transform:scale(.94); }
+  #artBtns { position:fixed; left:8px; top:calc(env(safe-area-inset-top,0px) + 58px); display:flex; flex-direction:column; gap:8px; z-index:6; }
+  .abtn { width:48px; height:48px; border-radius:14px; border:1px solid rgba(255,255,255,.2); background:rgba(30,22,56,.9); color:#fff; font-size:22px; cursor:pointer; position:relative; }
+  .abtn:disabled { opacity:.4; }
+  .abtn .cd { position:absolute; right:3px; bottom:1px; font-size:10px; font-weight:800; color:#ffd75e; }
 
   /* ---------- NPC panel ---------- */
   #npcPanel { position:fixed; left:0; right:0; bottom:0; padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px); background:linear-gradient(180deg, rgba(16,13,32,.0), rgba(16,13,32,.92) 22%); z-index:5; display:none; }
@@ -102,6 +106,7 @@
     <div id="orb"></div>
     <span id="dayLbl">Day 1</span>
     <span id="timeLbl">2:00</span>
+    <span id="comboLbl" style="display:none;color:#8effc1;font-weight:800;font-size:13px"></span>
     <span id="essenceLbl">✦ 0</span>
   </div>
   <div id="hudRow2">
@@ -116,7 +121,9 @@
   <button class="mbtn" onclick="openCase()">📦</button>
   <button class="mbtn" onclick="openMap()">🗺️</button>
   <button class="mbtn" id="sndBtn" onclick="toggleSound()">🔊</button>
+  <button class="mbtn" onclick="openSettings()">⏸️</button>
 </div>
+<div id="artBtns" style="display:none"></div>
 
 <div id="npcPanel">
   <div id="npcHead"><span id="npcName"></span><span id="npcGroup"></span></div>
@@ -156,6 +163,7 @@ const VENUES = [
   { id:'park',   name:'Dawnlight Park',    desc:'Calm, sunny, forgiving. Emotions drift gently upward.',      ambient: 0.06, volMult:0.85, bloomAt:500,  sky:['#1b2a4a','#3a2f5c'], ground:'#16321f' },
   { id:'club',   name:'The Neon Cellar',   desc:'Loud and volatile. Feelings spike fast in every direction.', ambient: 0.00, volMult:1.55, bloomAt:900,  sky:['#180a2e','#3d0f4f'], ground:'#1a0f2e' },
   { id:'office', name:'Grindstone Offices',desc:'Fluorescent stress. Moods lean sour — rich soil for Blight.',ambient:-0.08, volMult:1.10, bloomAt:1300, sky:['#101622','#232c3d'], ground:'#1c2230' },
+  { id:'market', name:'The Night Market',  desc:'Lanterns and haggling. The mood swings like a pendulum all day.', ambient:0, volMult:1.25, bloomAt:1700, sky:['#0d0d26','#2e1240'], ground:'#241536' },
 ];
 const venueById = id => VENUES.find(v=>v.id===id);
 
@@ -200,12 +208,91 @@ const ROSTER = [
   { id:'o10',name:'Kip',    venue:'office', group:'The Managers',  base:-0.25, vol:1.3, res:0.9 },
   { id:'o11',name:'Lena',   venue:'office', group:'The Managers',  base: 0.30, vol:1.0, res:1.2 },
   { id:'o12',name:'Moe',    venue:'office', group:'The Managers',  base:-0.40, vol:1.4, res:0.7 },
+  // The Night Market (10)
+  { id:'m1', name:'Anh',    venue:'market', group:'The Street Cooks', base: 0.25, vol:1.2, res:1.1 },
+  { id:'m2', name:'Bao',    venue:'market', group:'The Street Cooks', base: 0.05, vol:1.4, res:0.9 },
+  { id:'m3', name:'Cyrus',  venue:'market', group:'The Street Cooks', base:-0.15, vol:1.3, res:1.0 },
+  { id:'m4', name:'Dima',   venue:'market', group:'The Collectors',   base:-0.05, vol:0.8, res:1.2 },
+  { id:'m5', name:'Esme',   venue:'market', group:'The Collectors',   base: 0.30, vol:0.7, res:1.3 },
+  { id:'m6', name:'Fox',    venue:'market', group:'The Collectors',   base:-0.30, vol:1.1, res:0.8 },
+  { id:'m7', name:'Gio',    venue:'market', group:'The Buskers',      base: 0.45, vol:1.5, res:1.2 },
+  { id:'m8', name:'Hazel',  venue:'market', group:'The Buskers',      base: 0.20, vol:1.3, res:1.0 },
+  { id:'m9', name:'Ines',   venue:'market', group:'The Buskers',      base:-0.10, vol:1.6, res:0.9 },
+  { id:'m10',name:'Jojo',   venue:'market', group:'The Buskers',      base: 0.35, vol:1.2, res:1.1 },
 ];
 const npcDef = id => ROSTER.find(n=>n.id===id);
 const GROUPS = [...new Set(ROSTER.map(n=>n.group))];
 const groupMembers = g => ROSTER.filter(n=>n.group===g);
 
 const ANCHORS = [[0.28,0.34],[0.72,0.30],[0.30,0.66],[0.72,0.66],[0.50,0.48]];
+
+/* ---------------- traits: learnable emotional patterns ---------------- */
+const TRAITS = {
+  sunny:    { n:'Sunny',      d:'lifts hit 50% harder' },
+  spirally: { n:'Spirally',   d:'put-downs hit 50% harder' },
+  guarded:  { n:'Guarded',    d:'all pushes 30% weaker' },
+  volatile: { n:'Volatile',   d:'life events strike twice as often' },
+  steady:   { n:'Steady',     d:'charge decays half as fast' },
+  bottled:  { n:'Bottled Up', d:'shorter peaks, higher ceiling' },
+  openbook: { n:'Open Book',  d:'charge always visible' },
+  empath:   { n:'Empath',     d:'catches the group’s mood twice as fast' },
+  loner:    { n:'Loner',      d:'immune to the group’s mood' },
+  resilient:{ n:'Resilient',  d:'recovers twice as fast' },
+  deepwell: { n:'Deep Well',  d:'harvests yield +20%' },
+  fragile:  { n:'Fragile',    d:'if husked, their gloom spreads twice as far' },
+};
+const NPC_TRAITS = {
+  p1:['sunny','resilient'], p2:['volatile'], p3:['spirally','fragile'], p4:['steady','deepwell'],
+  p5:['openbook'], p6:['spirally'], p7:['guarded'], p8:['loner','steady'], p9:['empath'], p10:['bottled'],
+  c1:['volatile','deepwell'], c2:['sunny'], c3:['guarded','bottled'], c4:['empath'], c5:['spirally','fragile'],
+  c6:['loner'], c7:['openbook','steady'], c8:['sunny','volatile'], c9:['resilient'], c10:['volatile'],
+  c11:['empath','deepwell'], c12:['guarded'], c13:['steady'], c14:['spirally','bottled'],
+  o1:['spirally'], o2:['sunny','volatile'], o3:['fragile','spirally'], o4:['guarded','steady'],
+  o5:['loner','bottled'], o6:['resilient','openbook'], o7:['spirally','deepwell'], o8:['steady'],
+  o9:['empath'], o10:['guarded','fragile'], o11:['sunny','resilient'], o12:['volatile','spirally'],
+  m1:['sunny','steady'], m2:['volatile'], m3:['guarded','deepwell'], m4:['loner','steady'],
+  m5:['openbook','resilient'], m6:['spirally','bottled'], m7:['sunny','empath'], m8:['resilient'],
+  m9:['volatile','fragile'], m10:['deepwell'],
+};
+const hasTrait = (id,t)=>(NPC_TRAITS[id]||[]).includes(t);
+const known = id=>!!meta.known[id];
+
+/* ---------------- daily weather + venue events ---------------- */
+const WEATHERS = [
+  { id:'clear',    n:'Clear Skies',    d:'A plain, honest day.' },
+  { id:'golden',   n:'Golden Morning', d:'Everyone drifts a little brighter.', drift: 0.1 },
+  { id:'drizzle',  n:'Grey Drizzle',   d:'Everyone drifts a little gloomier.', drift:-0.1 },
+  { id:'static',   n:'Static Air',     d:'Emotional charge lingers — decay is halved.', decay:0.5 },
+  { id:'restless', n:'Restless Winds', d:'Life events strike twice as often.', events:2 },
+];
+const WX = ()=>WEATHERS.find(w=>w.id===(run&&run.weather))||WEATHERS[0];
+const VENUE_EVENTS = [
+  { venue:'park',   group:'The Joggers',      n:'Marathon Day',    d:'The Joggers arrive pumped.', v: 0.50, i:0.35 },
+  { venue:'park',   group:'The Picnickers',   n:'Ant Invasion',    d:'The Picnickers are having a rough one.', v:-0.45, i:0.30 },
+  { venue:'club',   group:'The Birthday Crew',n:'Birthday Night',  d:'The Birthday Crew starts euphoric.', v: 0.60, i:0.45 },
+  { venue:'club',   group:'The Bar Staff',    n:'Double Shift',    d:'The Bar Staff is running on fumes.', v:-0.50, i:0.35 },
+  { venue:'office', group:'The Sales Pod',    n:'Quarter Close',   d:'The Sales Pod is deep in crunch.', v:-0.55, i:0.40 },
+  { venue:'office', group:'The Managers',     n:'Bonus Rumors',    d:'The Managers smell money.', v: 0.45, i:0.30 },
+  { venue:'market', group:'The Buskers',      n:'Full Moon Crowd', d:'The Buskers are feeding off the crowd.', v: 0.50, i:0.40 },
+  { venue:'market', group:'The Collectors',   n:'Rare Find',       d:'A legendary piece surfaced — The Collectors are frantic.', v: 0.40, i:0.50 },
+];
+function rollDay(){
+  run.weather = run.day===1 ? 'clear' : WEATHERS[Math.floor(Math.random()*WEATHERS.length)].id;
+  run.event = null;
+  const pool = VENUE_EVENTS.filter(e=>run.unlocked[e.venue]);
+  if (run.day>1 && pool.length && Math.random()<0.6) {
+    const ev = pool[Math.floor(Math.random()*pool.length)];
+    run.event = { venue:ev.venue, group:ev.group, n:ev.n, d:ev.d };
+    for (const m of groupMembers(ev.group)) { const n = run.npcs[m.id];
+      if (n.state==='idle'){ n.v = clamp(n.v + ev.v, -1, 1); n.i = clamp(Math.max(n.i, Math.abs(ev.i)), 0, 1); } }
+  }
+}
+function announceDay(){
+  const w = WX();
+  toast('☀️ Day '+run.day+' — quota ✦'+quotaFor(run.day));
+  if (w.id!=='clear') toast(w.n+': '+w.d);
+  if (run.event) toast('📣 '+run.event.n+' at '+venueById(run.event.venue).name+' — '+run.event.d);
+}
 
 /* Actions. dir: valence push direction. power: valence push. gain: intensity gain.
    cost: focus. cd: cooldown s. aoe: hits whole social group. */
@@ -230,10 +317,12 @@ const SHOP = [
   { id:'sight',  kind:'upg',    price:120, name:'Aura Sight',     desc:'See exact charge % above every head.' },
   { id:'patient',kind:'upg',    price:250, name:'Patient Eye',    desc:'Peak windows last 50% longer.' },
   { id:'reson',  kind:'upg',    price:400, name:'Deep Resonance', desc:'All harvests yield +15%.' },
+  { id:'chorus', kind:'art',    price:500, name:'Art: Radiant Chorus', desc:'Active. Lift every idle soul in the venue at once. 45s cooldown.' },
+  { id:'veil',   kind:'art',    price:500, name:'Art: Umbral Veil',    desc:'Active. For 12s your reputation is hidden — no push penalty, husks stop glooming. 60s cooldown.' },
 ];
 
 /* ---------------- persistent meta ---------------- */
-let meta = { case:{}, muted:false, seenHow:false, bestPurity:null, endings:[] };
+let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[] };
 try { const m = localStorage.getItem('auraFarmMeta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch(e) {}
 function saveMeta(){ try { localStorage.setItem('auraFarmMeta', JSON.stringify(meta)); } catch(e) {} }
 
@@ -241,30 +330,70 @@ function saveMeta(){ try { localStorage.setItem('auraFarmMeta', JSON.stringify(m
 let run = null;
 function newRun(){
   const npcs = {};
-  for (const d of ROSTER) {
-    npcs[d.id] = { v:clamp(d.base + rnd(-0.15,0.15), -1, 1), i:rnd(0.03,0.12), state:'idle',
-      recoverT:0, peak:0, peakDur:0, momentum:1, lastDir:0, eventT:rnd(4,18), festerT:0,
-      x:0, y:0, tx:0, ty:0, moveT:0, placed:false, bob:rnd(0,6.28) };
-  }
+  for (const d of ROSTER) npcs[d.id] = freshNpc(d);
   return { day:1, dayT:DAY_LEN, dayEarned:0, essence:0, rad:0, bli:0, focus:100,
     venue:'park', harvests:0, npcs,
-    zones:{ park:{total:0,rad:0,bli:0,bloomed:null}, club:{total:0,rad:0,bli:0,bloomed:null}, office:{total:0,rad:0,bli:0,bloomed:null} },
-    unlocked:{ park:true, club:false, office:false },
+    dayRad:0, dayBli:0, dayBest:null, combo:0, lastSign:0, history:[],
+    weather:'clear', event:null, veilT:0, arts:{}, artCd:{},
+    zones:{ park:{total:0,rad:0,bli:0,bloomed:null}, club:{total:0,rad:0,bli:0,bloomed:null}, office:{total:0,rad:0,bli:0,bloomed:null}, market:{total:0,rad:0,bli:0,bloomed:null} },
+    unlocked:{ park:true, club:false, office:false, market:false },
     owned:{ hype:true, snide:true }, upgrades:{} };
+}
+function freshNpc(d){
+  return { v:clamp(d.base + rnd(-0.15,0.15), -1, 1), i:rnd(0.03,0.12), state:'idle',
+    recoverT:0, peak:0, peakDur:0, momentum:1, lastDir:0, eventT:rnd(4,18), festerT:0, seen:0,
+    x:0, y:0, tx:0, ty:0, moveT:0, placed:false, bob:rnd(0,6.28) };
+}
+function migrateRun(r){ // fill fields missing from older saves
+  const fresh = { dayRad:0, dayBli:0, dayBest:null, combo:0, lastSign:0, history:[], weather:'clear', event:null, veilT:0, arts:{}, artCd:{} };
+  for (const k in fresh) if (r[k]===undefined) r[k] = fresh[k];
+  if (!r.zones.market) r.zones.market = { total:0, rad:0, bli:0, bloomed:null };
+  if (r.unlocked.market===undefined) r.unlocked.market = false;
+  for (const d of ROSTER) { if (!r.npcs[d.id]) r.npcs[d.id] = freshNpc(d); if (r.npcs[d.id].seen===undefined) r.npcs[d.id].seen = 0; }
+  return r;
 }
 function saveRun(){ try { if (run) localStorage.setItem('auraFarmRun', JSON.stringify(run)); else localStorage.removeItem('auraFarmRun'); } catch(e) {} }
 function loadRun(){ try { const r = localStorage.getItem('auraFarmRun'); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
 
 /* ---------------- audio ---------------- */
-let AC = null;
-function ac(){ if (!AC) { try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e) {} } return AC; }
+let AC = null, masterG = null;
+function ac(){
+  if (!AC) { try {
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    masterG = AC.createGain(); masterG.gain.value = meta.muted?0:1; masterG.connect(AC.destination);
+  } catch(e) {} }
+  return AC;
+}
 function beep(freq, dur, type, vol, when){
-  if (meta.muted) return; const c = ac(); if (!c) return;
+  const c = ac(); if (!c) return;
   const t = c.currentTime + (when||0);
   const o = c.createOscillator(), g = c.createGain();
   o.type = type||'sine'; o.frequency.value = freq;
   g.gain.setValueAtTime(vol||0.08, t); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
-  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.02);
+  o.connect(g); g.connect(masterG); o.start(t); o.stop(t+dur+0.02);
+}
+/* quiet ambient pad per venue */
+let padNodes = null;
+const PAD_CHORDS = { park:[220,329.6], club:[146.8,220.0], office:[164.8,246.9], market:[196.0,293.7] };
+function startAmbient(venueId){
+  const c = ac(); if (!c) return;
+  stopAmbient();
+  const freqs = PAD_CHORDS[venueId]||PAD_CHORDS.park;
+  const g = c.createGain(); g.gain.value = 0; g.gain.linearRampToValueAtTime(0.016, c.currentTime+2);
+  const f = c.createBiquadFilter(); f.type='lowpass'; f.frequency.value = 700;
+  g.connect(f); f.connect(masterG);
+  const oscs = freqs.map((fr,i)=>{
+    const o = c.createOscillator(); o.type = i? 'triangle':'sine';
+    o.frequency.value = fr; o.detune.value = i?4:-3; o.connect(g); o.start(); return o;
+  });
+  padNodes = { g, f, oscs };
+}
+function stopAmbient(){
+  if (!padNodes) return;
+  try { const c = AC; padNodes.g.gain.linearRampToValueAtTime(0, c.currentTime+0.6);
+    const p = padNodes; setTimeout(()=>p.oscs.forEach(o=>{ try{o.stop();}catch(e){} }), 800);
+  } catch(e) {}
+  padNodes = null;
 }
 const sfx = {
   tap: ()=>beep(520,0.06,'triangle',0.05),
@@ -276,7 +405,7 @@ const sfx = {
   fail: ()=>{ beep(300,0.3,'sawtooth',0.08); beep(200,0.5,'sawtooth',0.08,0.2); },
   day: ()=>{ beep(523,0.15,'sine',0.07); beep(659,0.15,'sine',0.07,0.12); beep(784,0.3,'sine',0.07,0.24); },
 };
-function toggleSound(){ meta.muted = !meta.muted; $('sndBtn').textContent = meta.muted?'🔇':'🔊'; saveMeta(); }
+function toggleSound(){ meta.muted = !meta.muted; if (masterG) masterG.gain.value = meta.muted?0:1; $('sndBtn').textContent = meta.muted?'🔇':'🔊'; saveMeta(); }
 
 /* ---------------- canvas ---------------- */
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -302,13 +431,13 @@ let cooldowns = {};        // actionId -> seconds left
 let toastTimes = [];
 
 function startGame(fresh){
-  run = fresh ? newRun() : (loadRun() || newRun());
+  run = fresh ? newRun() : migrateRun(loadRun() || newRun());
   selected = null; cooldowns = {}; particles = [];
   mode = 'play'; closeModal();
   $('hud').style.display = 'flex'; $('menuBtns').style.display = 'flex';
   $('sndBtn').textContent = meta.muted?'🔇':'🔊';
-  placeNPCs();
-  if (fresh) { toast('Day 1 — meet your quota of ✦'+quotaFor(1)+' before dusk.');
+  placeNPCs(); startAmbient(run.venue); renderArts();
+  if (fresh) { rollDay(); toast('Day 1 — meet your quota of ✦'+quotaFor(1)+' before dusk.');
     setTimeout(()=>{ if(mode==='play') toast('Tap someone to read their aura.'); }, 3500); }
   updateHud();
 }
@@ -346,10 +475,24 @@ function yieldMult(sign, zone){
   return m;
 }
 function repMod(dir){
+  if (run.veilT > 0) return 1;
   const k = karma();
   if (k > 0.4) return dir>0 ? 1.1 : 0.75;
   if (k < -0.4) return dir<0 ? 1.1 : 0.75;
   return 1;
+}
+function trackSeen(id, amt){
+  const n = run.npcs[id]; n.seen += amt;
+  if (!meta.known[id] && n.seen >= 4 && (NPC_TRAITS[id]||[]).length) {
+    meta.known[id] = 1; saveMeta();
+    toast('🔍 You’ve read '+npcDef(id).name+': '+NPC_TRAITS[id].map(t=>TRAITS[t].n).join(' + '));
+    if (selected===id) renderPanel();
+  }
+}
+function traitLine(id){
+  const ts = NPC_TRAITS[id]||[];
+  if (!ts.length) return '';
+  return known(id) ? ts.map(t=>TRAITS[t].n+' — '+TRAITS[t].d).join(' · ') : '❔ unread (interact to learn them)';
 }
 function moodText(n){
   if (n.state==='husk') return 'Hollow. Nothing left to feel.';
@@ -390,15 +533,19 @@ function doAction(actId){
   const targets = act.aoe ? groupMembers(def.group).map(m=>run.npcs[m.id]).filter(t=>t.state==='idle') : [n];
   for (const t of targets) pushEmotion(t, act, npcDef(ROSTER.find(r=>run.npcs[r.id]===t).id));
   sfx.act(act.dir);
+  trackSeen(selected, 1);
   renderPanel();
 }
 function pushEmotion(n, act, def){
-  const mod = repMod(act.dir);
+  let mod = repMod(act.dir);
+  if (act.dir>0 && hasTrait(def.id,'sunny')) mod *= 1.5;
+  if (act.dir<0 && hasTrait(def.id,'spirally')) mod *= 1.5;
+  if (hasTrait(def.id,'guarded')) mod *= 0.7;
   n.v = clamp(n.v + act.dir*act.power*(1-Math.abs(n.v)*0.4)*mod, -1, 1);
   if (n.lastDir === act.dir) n.momentum = Math.min(2, n.momentum + 0.25);
   else { n.momentum = 1; n.i *= 0.85; }
   n.lastDir = act.dir;
-  const cap = act.dir>0 ? 0.95 : 1.0;
+  const cap = Math.min(1, (act.dir>0 ? 0.95 : 1.0) + (hasTrait(def.id,'bottled')?0.05:0));
   const volm = def.vol * venueById(def.venue).volMult * (run.zones[def.venue].bloomed==='turb'?1.5:1);
   n.i = clamp(n.i + act.gain*n.momentum*volm*mod, 0, cap);
   puff(n.x, n.y-20, act.dir>0?'#ffd75e':'#a86bff', 5);
@@ -412,10 +559,20 @@ function harvest(){
   const sign = n.v >= 0 ? 1 : -1;
   if (Math.abs(n.v) < 0.25) { toast('Their feeling is too faint to harvest. Push it further.'); return; }
   run.focus -= 10;
+  trackSeen(selected, 2);
 
-  const amt = Math.round(n.i * 100 * (sign<0 ? 1.6 : 1.0) * yieldMult(sign, def.venue));
+  const onPeak = n.peak > 0;
+  if (onPeak) run.combo = (run.combo>0 && run.lastSign!==sign) ? 1 : run.combo+1;
+  else run.combo = 0;
+  run.lastSign = sign;
+  const comboMult = 1 + Math.min(0.4, Math.max(0, run.combo-1)*0.08);
+
+  let amt = Math.round(n.i * 100 * (sign<0 ? 1.6 : 1.0) * yieldMult(sign, def.venue) * comboMult);
+  if (hasTrait(def.id,'deepwell')) amt = Math.round(amt*1.2);
   run.essence += amt; run.dayEarned += amt; run.harvests++;
-  if (sign>0) run.rad += amt; else run.bli += amt;
+  if (sign>0) { run.rad += amt; run.dayRad += amt; } else { run.bli += amt; run.dayBli += amt; }
+  if (!run.dayBest || n.i > run.dayBest.i) run.dayBest = { name:def.name, i:+n.i.toFixed(3) };
+  if (run.combo>=2) floatText(n.x, n.y-56, 'COMBO ×'+run.combo, '#8effc1');
   const z = run.zones[def.venue]; z.total += amt; if (sign>0) z.rad += amt; else z.bli += amt;
 
   // specimen
@@ -431,7 +588,7 @@ function harvest(){
 
   burst(n.x, n.y, sign>0?'#ffd75e':'#c79bff', Math.round(10+n.i*22));
   floatText(n.x, n.y-34, '+'+amt+' ✦', sign>0?'#ffd75e':'#c79bff');
-  if (sign>0) { sfx.harvR(); n.state='recover'; n.recoverT = 28/def.res; n.i = 0; n.v *= 0.5; n.peak = 0; }
+  if (sign>0) { sfx.harvR(); n.state='recover'; n.recoverT = 28/def.res * (hasTrait(def.id,'resilient')?0.5:1); n.i = 0; n.v *= 0.5; n.peak = 0; }
   else { sfx.harvB(); n.state='husk'; n.i = 0; n.peak = 0; toast(def.name+' goes quiet. They won’t feel again this run.'); }
 
   checkBloom(def.venue);
@@ -457,13 +614,17 @@ function update(dt){
   if (mode!=='play' || modalOpen) return;
   run.focus = clamp(run.focus + 6*dt, 0, 100);
   for (const k in cooldowns) cooldowns[k] = Math.max(0, cooldowns[k]-dt);
+  run.veilT = Math.max(0, run.veilT - dt);
+  for (const k in run.artCd) run.artCd[k] = Math.max(0, run.artCd[k]-dt);
+  artsT -= dt; if (artsT<=0){ artsT = 0.3; updateArtBtns(); }
 
   run.dayT -= dt;
   if (run.dayT <= 0) return endDay();
 
   const cur = run.venue;
   const huskList = [];
-  for (const d of ROSTER) { const n = run.npcs[d.id]; if (n.state==='husk' && d.venue===cur) huskList.push(n); }
+  for (const d of ROSTER) { const n = run.npcs[d.id];
+    if (n.state==='husk' && d.venue===cur) huskList.push({ x:n.x, y:n.y, r:hasTrait(d.id,'fragile')?220:110 }); }
 
   for (const d of ROSTER) {
     const n = run.npcs[d.id];
@@ -478,14 +639,15 @@ function update(dt){
     if (!inCur) { n.v += (d.base - n.v)*0.01*dt; n.i = Math.max(0.05, n.i - 0.004*dt); continue; }
 
     const vd = venueById(d.venue), z = run.zones[d.venue];
-    // drift toward baseline + ambiance
+    // drift toward baseline + ambiance + daily weather (the market's mood swings like a pendulum)
     const driftMult = n.festerT>0 ? 0.25 : 1;
-    let target = d.base + vd.ambient + (z.bloomed==='bloom'?0.12:0) + (z.bloomed==='blight'?-0.12:0);
+    const amb = vd.ambient + (vd.id==='market' ? 0.15*Math.sin((DAY_LEN-run.dayT)/12) : 0);
+    let target = d.base + amb + (WX().drift||0) + (z.bloomed==='bloom'?0.12:0) + (z.bloomed==='blight'?-0.12:0);
     n.v += (clamp(target,-1,1) - n.v)*0.018*dt*driftMult;
     if (n.festerT>0) n.festerT -= dt;
 
     // life events: spontaneous emotional weather — observation matters
-    n.eventT -= dt * d.vol * vd.volMult;
+    n.eventT -= dt * d.vol * vd.volMult * (WX().events||1) * (hasTrait(d.id,'volatile')?2:1);
     if (n.eventT <= 0) {
       n.eventT = rnd(9, 26);
       n.v = clamp(n.v + rnd(-0.5,0.5)*d.vol, -1, 1);
@@ -493,24 +655,26 @@ function update(dt){
       puff(n.x, n.y-18, n.v>=0?'#ffe9a8':'#d0b0ff', 3);
     }
 
-    // group contagion
-    let gs = 0, gc = 0;
-    for (const m of groupMembers(d.group)) { if (m.id===d.id) continue;
-      const o = run.npcs[m.id]; if (o.state!=='idle') continue;
-      gs += o.v; gc++; }
-    if (gc) n.v += (gs/gc - n.v) * 0.03 * dt * (z.bloomed==='blight'?2:1);
+    // group contagion (Loners are immune; Empaths catch it double)
+    if (!hasTrait(d.id,'loner')) {
+      let gs = 0, gc = 0;
+      for (const m of groupMembers(d.group)) { if (m.id===d.id) continue;
+        const o = run.npcs[m.id]; if (o.state!=='idle') continue;
+        gs += o.v; gc++; }
+      if (gc) n.v += (gs/gc - n.v) * 0.03 * dt * (z.bloomed==='blight'?2:1) * (hasTrait(d.id,'empath')?2:1);
+    }
 
-    // husk gloom
-    for (const h of huskList) { const dx=h.x-n.x, dy=h.y-n.y;
-      if (dx*dx+dy*dy < 110*110) n.v = clamp(n.v - 0.012*dt, -1, 1); }
+    // husk gloom (paused while the Umbral Veil holds)
+    if (run.veilT<=0) for (const h of huskList) { const dx=h.x-n.x, dy=h.y-n.y;
+      if (dx*dx+dy*dy < h.r*h.r) n.v = clamp(n.v - 0.012*dt, -1, 1); }
 
     // intensity decay
-    if (n.peak <= 0) n.i = Math.max(0.04, n.i - 0.008*dt);
+    if (n.peak <= 0) n.i = Math.max(0.04, n.i - 0.008*dt*(WX().decay||1)*(hasTrait(d.id,'steady')?0.5:1));
 
     // ripening: peak windows
     if (n.peak > 0) {
       n.peak -= dt;
-      const cap = n.v>=0 ? 0.95 : 1.0;
+      const cap = Math.min(1, (n.v>=0 ? 0.95 : 1.0) + (hasTrait(d.id,'bottled')?0.05:0));
       n.i = clamp(n.i + 0.02*dt*d.vol, 0, cap);
       if (n.peak <= 0) { // missed it — the feeling vents
         n.i = 0.18; if (n.v < 0) n.v *= 0.4;
@@ -518,7 +682,7 @@ function update(dt){
         if (selected===d.id) renderPanel();
       }
     } else if (n.i >= 0.75) {
-      n.peakDur = (n.v>=0 ? 12 : 5) * (run.upgrades.patient?1.5:1);
+      n.peakDur = Math.max(2.5, ((n.v>=0 ? 12 : 5) - (hasTrait(d.id,'bottled')?1.5:0)) * (run.upgrades.patient?1.5:1));
       n.peak = n.peakDur;
       sfx.peak(); puff(n.x, n.y-26, '#fff', 10);
       if (selected===d.id) renderPanel();
@@ -564,12 +728,16 @@ function endDay(){
   const met = run.dayEarned >= quotaFor(run.day);
   if (!met) { sfx.fail(); return gameOver(); }
   sfx.day();
+  run.history.push({ d:run.day, rad:run.dayRad, bli:run.dayBli });
   if (run.day >= LAST_DAY) return ending();
+  const husks = ROSTER.filter(d=>run.npcs[d.id].state==='husk').length;
   showModal(`
     <h2>Dusk falls on Day ${run.day}</h2>
     <div class="sub">Quota met. The farm endures.</div>
     <div class="statline"><span>Harvested today</span><b>✦ ${run.dayEarned}</b></div>
     <div class="statline"><span>Quota</span><b>✦ ${quotaFor(run.day)}</b></div>
+    ${run.dayBest?`<div class="statline"><span>Finest capture</span><b>${run.dayBest.name} · ${Math.round(run.dayBest.i*100)}%</b></div>`:''}
+    <div class="statline"><span>Husks left behind</span><b>${husks}</b></div>
     <div class="statline"><span>Tomorrow’s quota</span><b>✦ ${quotaFor(run.day+1)}</b></div>
     <div class="statline"><span>Balance</span><b style="color:#ffd75e">✦ ${run.essence}</b></div>
     <button class="big" onclick="nextDay()">Begin Day ${run.day+1} ➜</button>
@@ -577,10 +745,12 @@ function endDay(){
 }
 function nextDay(){
   run.day++; run.dayT = DAY_LEN; run.dayEarned = 0; run.focus = 100;
+  run.dayRad = 0; run.dayBli = 0; run.dayBest = null; run.combo = 0;
   for (const d of ROSTER) { const n = run.npcs[d.id];
     if (n.state==='recover') { n.recoverT = Math.max(0, n.recoverT - 20); if (n.recoverT<=0){ n.state='idle'; n.i=0.05; } } }
+  rollDay();
   saveRun(); saveMeta(); closeModal();
-  toast('☀️ Day '+run.day+' — quota ✦'+quotaFor(run.day));
+  announceDay();
 }
 function gameOver(){
   mode = 'over';
@@ -596,7 +766,7 @@ function gameOver(){
     <button class="big" onclick="restart()">Farm Again</button>
     <button class="big ghost" onclick="toTitle()">Title</button>
   `, true);
-  run = null; saveRun();
+  run = null; saveRun(); stopAmbient();
 }
 function ending(){
   mode = 'ending';
@@ -609,20 +779,26 @@ function ending(){
   else { title = '⚖️ The Gray Broker'; line = 'Light when it paid, blight when it didn’t. The farm neither blooms nor dies. It waits.'; }
   const specs = Object.values(meta.case);
   const avgI = specs.length ? specs.reduce((s,x)=>s+x.i,0)/specs.length : 0;
-  const grade = specs.length>=30&&avgI>=0.8?'S':specs.length>=22&&avgI>=0.65?'A':specs.length>=14&&avgI>=0.5?'B':'C';
+  const grade = specs.length>=38&&avgI>=0.8?'S':specs.length>=28&&avgI>=0.65?'A':specs.length>=18&&avgI>=0.5?'B':'C';
   if (!meta.endings.includes(title)) meta.endings.push(title);
   meta.bestPurity = pct; saveMeta();
+  const husks = ROSTER.filter(d=>run.npcs[d.id].state==='husk').length;
+  const bars = run.history.map(h=>{ const t2 = h.rad+h.bli || 1; const rp = Math.round(100*h.rad/t2);
+    return `<div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11px"><span style="width:30px;opacity:.6">D${h.d}</span><div style="flex:1;height:8px;border-radius:4px;overflow:hidden;display:flex;background:rgba(255,255,255,.08)"><div style="width:${rp}%;background:#ffd75e"></div><div style="flex:1;background:#a86bff"></div></div></div>`;
+  }).join('');
   showModal(`
     <h2>${title}</h2>
     <div class="sub">${line}</div>
     <div class="statline"><span>Radiance purity</span><b>${pct}%</b></div>
     <div class="statline"><span>Lifetime harvest</span><b>✦ ${total}</b></div>
+    <div class="statline"><span>Souls husked</span><b>${husks}</b></div>
     <div class="statline"><span>Specimen case</span><b>${specs.length}/${ROSTER.length} · avg ${(avgI*100)|0}% · grade ${grade}</b></div>
     <div class="statline"><span>Sets completed</span><b>${setsDone()} / ${GROUPS.length}</b></div>
+    <h3>How each day was farmed</h3>${bars}
     <button class="big" onclick="restart()">Farm Again</button>
     <button class="big ghost" onclick="toTitle()">Title</button>
   `, true);
-  run = null; saveRun();
+  run = null; saveRun(); stopAmbient();
 }
 function restart(){ closeModal(); startGame(true); }
 function toTitle(){ closeModal(); titleScreen(); }
@@ -639,9 +815,12 @@ function updateHud(){
   $('quotaTxt').textContent = run.dayEarned+' / '+q;
   $('focusFill').style.width = run.focus+'%';
   const k = (karma()+1)/2; // 0 blight .. 1 radiance
-  const col = blend('#a86bff','#ffd75e',k);
+  const col = run.veilT>0 ? '#cfd2ff' : blend('#a86bff','#ffd75e',k);
   $('orb').style.background = 'radial-gradient(circle at 35% 35%, #fff8, transparent 60%), '+col;
   $('orb').style.boxShadow = '0 0 12px 3px '+col+'88';
+  const cl = $('comboLbl');
+  if (run.combo>=2) { cl.style.display='inline'; cl.textContent = '⚡×'+run.combo; }
+  else cl.style.display='none';
 }
 function blend(c1,c2,t){
   const p = h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
@@ -657,7 +836,7 @@ function renderPanel(soft){
   panel.style.display = 'block';
   $('npcName').textContent = d.name;
   $('npcGroup').textContent = d.group;
-  $('npcMood').textContent = moodText(n);
+  $('npcMood').innerHTML = moodText(n) + '<br><span style="opacity:.62;font-size:11.5px">'+traitLine(d.id)+'</span>';
   if (soft) { // just refresh disabled states + mood
     for (const btn of $('npcActions').querySelectorAll('.act[data-a]')) {
       const a = ACTIONS[btn.dataset.a];
@@ -719,7 +898,7 @@ function openShop(){
   if (mode!=='play') return; sfx.tap();
   let rows = '';
   for (const it of SHOP) {
-    const owned = it.kind==='action' ? run.owned[it.id] : run.upgrades[it.id];
+    const owned = it.kind==='action' ? run.owned[it.id] : it.kind==='art' ? run.arts[it.id] : run.upgrades[it.id];
     rows += `<div class="shopItem"><div class="info"><div class="nm">${it.name}</div><div class="ds">${it.desc}</div></div>`
       + (owned ? '<div class="owned">owned</div>'
                : `<button class="buyBtn" ${run.essence<it.price?'disabled':''} onclick="buyItem('${it.id}')">✦ ${it.price}</button>`)
@@ -731,9 +910,61 @@ function buyItem(id){
   const it = SHOP.find(s=>s.id===id);
   if (!it || run.essence < it.price) return;
   run.essence -= it.price;
-  if (it.kind==='action') run.owned[id] = true; else run.upgrades[id] = true;
+  if (it.kind==='action') run.owned[id] = true;
+  else if (it.kind==='art') { run.arts[id] = true; renderArts(); }
+  else run.upgrades[id] = true;
   sfx.buy(); saveRun(); openShop(); renderPanel(); updateHud();
 }
+
+/* ---------------- active arts ---------------- */
+let artsT = 0;
+const ART_DEFS = { chorus:{ icon:'🌟', cd:45 }, veil:{ icon:'🌑', cd:60 } };
+function renderArts(){
+  const box = $('artBtns'); box.innerHTML = '';
+  const owned = run ? Object.keys(ART_DEFS).filter(a=>run.arts[a]) : [];
+  box.style.display = owned.length ? 'flex' : 'none';
+  for (const a of owned) {
+    const b = document.createElement('button');
+    b.className = 'abtn'; b.dataset.art = a;
+    b.innerHTML = ART_DEFS[a].icon + '<span class="cd"></span>';
+    b.onclick = ()=>useArt(a);
+    box.appendChild(b);
+  }
+  updateArtBtns();
+}
+function updateArtBtns(){
+  if (!run) return;
+  for (const b of $('artBtns').querySelectorAll('.abtn')) {
+    const cd = run.artCd[b.dataset.art]||0;
+    b.disabled = cd>0 || run.focus<25 || mode!=='play';
+    b.querySelector('.cd').textContent = cd>0 ? Math.ceil(cd) : '';
+  }
+}
+function useArt(id){
+  if (!run || mode!=='play' || modalOpen || !run.arts[id]) return;
+  if ((run.artCd[id]||0) > 0 || run.focus < 25) return;
+  run.focus -= 25; run.artCd[id] = ART_DEFS[id].cd;
+  if (id==='chorus') {
+    for (const d of ROSTER) { if (d.venue!==run.venue) continue;
+      const n = run.npcs[d.id]; if (n.state!=='idle') continue;
+      n.v = clamp(n.v + 0.25, -1, 1); n.i = clamp(n.i + 0.06, 0, 1);
+      puff(n.x, n.y-16, '#ffe9a8', 4); }
+    sfx.harvR(); toast('🌟 Radiant Chorus lifts the whole room.');
+  } else {
+    run.veilT = 12; sfx.act(-1); toast('🌑 Umbral Veil — your aura is unreadable for 12s.');
+  }
+  updateArtBtns(); renderPanel();
+}
+
+function openSettings(){
+  if (mode!=='play') return; sfx.tap();
+  showModal(`<h2>Paused</h2>
+    <button class="big" onclick="closeModal()">Resume</button>
+    <button class="big ghost" onclick="howTo()">How to Farm</button>
+    <button class="big ghost" onclick="abandonRun()">Abandon Run</button>
+    <div class="sub" style="margin-top:10px">The specimen case and everything you’ve learned about people are kept forever, run or no run.</div>`);
+}
+function abandonRun(){ run = null; saveRun(); stopAmbient(); closeModal(); titleScreen(); }
 
 function openCase(){
   if (mode!=='play') return; sfx.tap();
@@ -771,6 +1002,7 @@ function openMap(){
 function goVenue(id){
   if (!run.unlocked[id]) return;
   run.venue = id; selected = null; renderPanel(); closeModal(); sfx.tap();
+  startAmbient(id);
   toast('➜ '+venueById(id).name);
 }
 
@@ -782,12 +1014,13 @@ function howTo(back){
   <p><b>Timing is the skill.</b> An aura ring pulses faster as feeling builds. At high charge a <b>⚡ peak window</b> opens — harvest inside it for the best specimens. Too early: a weak specimen forever. Too late: the feeling vents to nothing. Blight peaks are short and sharp; Radiance peaks are wide and repeatable.</p>
   <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. Re-capture to upgrade.</p>
   <p>Your own aura shows what you are. Lean hard one way and the world responds — your opposite touch weakens.</p>
+  <p><b>People have patterns.</b> Interact with someone enough and you’ll read their traits — Sunny, Spirally, Guarded, Deep Well… — and what you learn is kept forever. Each day brings <b>emotional weather</b> and sometimes a venue event worth chasing. Chain harvests inside peak windows of the same type for a <b>⚡ combo</b> — switching sides breaks it.</p>
   </div><button class="big" onclick="${back==='title'?'titleScreen()':'closeModal()'}">Got it</button>`, true);
   meta.seenHow = true; saveMeta();
 }
 
 function titleScreen(){
-  mode = 'title'; run = null; selected = null;
+  mode = 'title'; run = null; selected = null; stopAmbient();
   $('hud').style.display='none'; $('menuBtns').style.display='none'; $('npcPanel').style.display='none';
   const hasSave = !!loadRun();
   const specs = Object.keys(meta.case).length;
@@ -879,13 +1112,26 @@ function drawVenue(vd, z){
       const bx = W*(0.2+0.2*i) + Math.sin(t*0.7+i)*30;
       ctx.beginPath(); ctx.moveTo(bx,0); ctx.lineTo(bx-46, playBot()); ctx.lineTo(bx+46, playBot()); ctx.closePath(); ctx.fill();
     }
-  } else {
+  } else if (vd.id==='office') {
     ctx.fillStyle='#2c3448';
     for (let i=0;i<3;i++) ctx.fillRect(W*0.14 + i*W*0.28, playTop()+30, W*0.16, 26);
     ctx.fillStyle='#e8ecf455';
     for (let i=0;i<5;i++) ctx.fillRect(W*0.1+i*W*0.18, 70, W*0.08, 5);
+  } else { // night market lantern strings
+    const t = performance.now()/1000;
+    const cols = ['#ffb84e','#ff6b81','#7fe08e','#6bb8ff'];
+    for (let row=0; row<2; row++) for (let i=0; i<7; i++) {
+      const x = W*(0.08+0.14*i), y = playTop()+26+row*44 + Math.sin(i*1.3+row+t*0.6)*6;
+      ctx.fillStyle = cols[(i+row)%4];
+      ctx.globalAlpha = 0.55; ctx.beginPath(); ctx.arc(x,y,6.5,0,6.283); ctx.fill();
+      ctx.globalAlpha = 0.16; ctx.beginPath(); ctx.arc(x,y,13,0,6.283); ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
+  // daylight fades to dusk as the quota clock runs down
+  const dp = 1 - run.dayT/DAY_LEN;
+  ctx.fillStyle = 'rgba(255,140,60,'+(0.10*Math.sin(Math.PI*dp)).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(4,2,12,'+(0.38*Math.pow(dp,1.5)).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
 }
 function drawNPC(d, n, t){
   const husked = n.state==='husk', rec = n.state==='recover';
@@ -929,7 +1175,7 @@ function drawNPC(d, n, t){
     ctx.fillStyle='#fff'; ctx.font='600 11px sans-serif'; ctx.textAlign='center';
     ctx.fillText(d.name, n.x, y-34);
   }
-  if (run.upgrades && run.upgrades.sight && !husked) {
+  if ((run.upgrades.sight || hasTrait(d.id,'openbook')) && !husked) {
     ctx.fillStyle = n.peak>0?'#fff':'#cfc6ee'; ctx.font='700 10px sans-serif'; ctx.textAlign='center';
     ctx.fillText(Math.round(n.i*100)+'%', n.x, y+30);
   }
