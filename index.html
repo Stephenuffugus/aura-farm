@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Aura Farm</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; overflow:hidden; background:#0b0a14; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:#e8e4f4; }
+  #cv { position:fixed; inset:0; touch-action:none; }
+  button { font-family:inherit; }
+
+  /* ---------- HUD ---------- */
+  #hud { position:fixed; top:0; left:0; right:0; padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 6px; display:flex; flex-direction:column; gap:5px; pointer-events:none; z-index:5; }
+  #hudRow1 { display:flex; align-items:center; gap:8px; }
+  #dayLbl { font-weight:700; font-size:14px; white-space:nowrap; }
+  #timeLbl { font-variant-numeric:tabular-nums; font-size:14px; opacity:.85; white-space:nowrap; }
+  #essenceLbl { margin-left:auto; font-weight:700; font-size:14px; color:#ffd75e; white-space:nowrap; }
+  #hudRow2 { display:flex; align-items:center; gap:8px; }
+  .bar { flex:1; height:10px; border-radius:5px; background:rgba(255,255,255,.12); overflow:hidden; position:relative; }
+  #quotaFill { height:100%; width:0%; background:linear-gradient(90deg,#5ec8ff,#8effc1); border-radius:5px; transition:width .3s; }
+  #quotaTxt { font-size:11px; opacity:.8; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #focusWrap { display:flex; align-items:center; gap:6px; width:130px; }
+  #focusBar { flex:1; height:8px; border-radius:4px; background:rgba(255,255,255,.12); overflow:hidden; }
+  #focusFill { height:100%; width:100%; background:linear-gradient(90deg,#c99bff,#7fb4ff); border-radius:4px; }
+  #focusLbl { font-size:11px; opacity:.75; }
+  #orb { width:26px; height:26px; border-radius:50%; box-shadow:0 0 12px 3px rgba(255,215,94,.5); background:radial-gradient(circle at 35% 35%, #fff8, transparent 60%), #ffd75e; flex:none; }
+
+  #menuBtns { position:fixed; right:8px; top:calc(env(safe-area-inset-top,0px) + 58px); display:flex; flex-direction:column; gap:8px; z-index:6; }
+  .mbtn { width:44px; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(24,20,42,.85); color:#fff; font-size:20px; cursor:pointer; }
+  .mbtn:active { transform:scale(.94); }
+
+  /* ---------- NPC panel ---------- */
+  #npcPanel { position:fixed; left:0; right:0; bottom:0; padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 10px); background:linear-gradient(180deg, rgba(16,13,32,.0), rgba(16,13,32,.92) 22%); z-index:5; display:none; }
+  #npcHead { display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
+  #npcName { font-weight:800; font-size:17px; }
+  #npcGroup { font-size:12px; opacity:.65; }
+  #npcMood { font-size:13px; margin-bottom:8px; min-height:17px; color:#cfc6ee; }
+  #npcActions { display:flex; flex-wrap:wrap; gap:7px; }
+  .act { padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.16); font-size:13px; font-weight:700; color:#fff; background:#2a2347; cursor:pointer; position:relative; overflow:hidden; }
+  .act:disabled { opacity:.38; }
+  .act:active:not(:disabled) { transform:scale(.95); }
+  .act.rad { background:linear-gradient(180deg,#8a6a1f,#6b5115); border-color:#ffd75e66; }
+  .act.bli { background:linear-gradient(180deg,#4c2b7a,#38205c); border-color:#a86bff66; }
+  .act.harv { background:linear-gradient(180deg,#1d5c46,#154434); border-color:#8effc166; }
+  .act.harvB { background:linear-gradient(180deg,#5c1d3f,#44152e); border-color:#ff6bb066; }
+  .cdveil { position:absolute; inset:0; background:rgba(0,0,0,.55); transform-origin:left; }
+  .cost { font-size:10px; opacity:.75; font-weight:400; display:block; }
+
+  /* ---------- modal ---------- */
+  #modal { position:fixed; inset:0; background:rgba(5,4,12,.78); z-index:20; display:none; align-items:flex-end; justify-content:center; }
+  #modal.center { align-items:center; }
+  #modalContent { background:#171230; border:1px solid rgba(255,255,255,.14); border-radius:18px 18px 0 0; width:100%; max-width:520px; max-height:86vh; overflow-y:auto; padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 18px); }
+  #modal.center #modalContent { border-radius:18px; margin:12px; }
+  h2 { font-size:19px; margin-bottom:4px; }
+  h3 { font-size:14px; margin:14px 0 6px; color:#bfb3e8; }
+  .sub { font-size:13px; opacity:.7; margin-bottom:12px; }
+  .big { display:block; width:100%; padding:13px; margin-top:10px; border-radius:13px; border:none; background:linear-gradient(180deg,#7c5cff,#5d40d6); color:#fff; font-size:15px; font-weight:800; cursor:pointer; }
+  .big.ghost { background:transparent; border:1px solid rgba(255,255,255,.25); }
+  .big:disabled { opacity:.4; }
+  .shopItem { display:flex; align-items:center; gap:10px; padding:10px; border-radius:12px; background:rgba(255,255,255,.05); margin-bottom:8px; }
+  .shopItem .info { flex:1; }
+  .shopItem .nm { font-weight:700; font-size:14px; }
+  .shopItem .ds { font-size:12px; opacity:.7; }
+  .buyBtn { padding:8px 12px; border-radius:10px; border:none; font-weight:800; font-size:13px; background:#ffd75e; color:#3a2c00; cursor:pointer; white-space:nowrap; }
+  .buyBtn:disabled { background:#443d5e; color:#999; }
+  .owned { color:#8effc1; font-weight:700; font-size:13px; padding:8px 4px; }
+  .caseGroup { margin-bottom:12px; }
+  .caseRow { display:flex; gap:6px; flex-wrap:wrap; }
+  .spec { width:64px; padding:6px 4px; border-radius:10px; background:rgba(255,255,255,.05); text-align:center; font-size:10px; }
+  .spec .tier { font-size:15px; display:block; }
+  .spec.empty { opacity:.35; }
+  .setDone { color:#8effc1; font-size:11px; font-weight:700; }
+  .venueCard { padding:12px; border-radius:13px; background:rgba(255,255,255,.06); margin-bottom:9px; border:1px solid transparent; cursor:pointer; }
+  .venueCard.cur { border-color:#7c5cff; }
+  .venueCard.lock { opacity:.45; }
+  .venueCard .nm { font-weight:800; font-size:15px; }
+  .venueCard .ds { font-size:12px; opacity:.7; margin-top:2px; }
+  .statline { display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.07); }
+  .tag { display:inline-block; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:700; margin-left:6px; }
+  .tag.bloom { background:#1d5c46; color:#8effc1; }
+  .tag.blight { background:#4c2b7a; color:#d9b8ff; }
+  .tag.turb { background:#5c4a1d; color:#ffe08e; }
+
+  /* ---------- toasts ---------- */
+  #toasts { position:fixed; top:calc(env(safe-area-inset-top,0px) + 64px); left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:15; pointer-events:none; }
+  .toast { background:rgba(23,18,48,.92); border:1px solid rgba(255,255,255,.18); padding:8px 14px; border-radius:12px; font-size:13px; font-weight:600; animation:tin .25s ease-out; max-width:86vw; text-align:center; }
+  @keyframes tin { from { opacity:0; transform:translateY(-8px);} to { opacity:1; transform:none;} }
+
+  .titleWrap { text-align:center; padding:10px 0 4px; }
+  .titleWrap h1 { font-size:34px; letter-spacing:1px; background:linear-gradient(90deg,#ffd75e,#a86bff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .titleWrap .tg { font-size:13px; opacity:.7; margin-top:4px; }
+  .howto p { font-size:13.5px; line-height:1.55; margin-bottom:9px; color:#d8d0f0; }
+  .gold { color:#ffd75e; font-weight:700; } .viol { color:#c79bff; font-weight:700; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud" style="display:none">
+  <div id="hudRow1">
+    <div id="orb"></div>
+    <span id="dayLbl">Day 1</span>
+    <span id="timeLbl">2:00</span>
+    <span id="essenceLbl">✦ 0</span>
+  </div>
+  <div id="hudRow2">
+    <div class="bar"><div id="quotaFill"></div></div>
+    <span id="quotaTxt">0 / 90</span>
+    <div id="focusWrap"><span id="focusLbl">focus</span><div id="focusBar"><div id="focusFill"></div></div></div>
+  </div>
+</div>
+
+<div id="menuBtns" style="display:none">
+  <button class="mbtn" onclick="openShop()">🛍️</button>
+  <button class="mbtn" onclick="openCase()">📦</button>
+  <button class="mbtn" onclick="openMap()">🗺️</button>
+  <button class="mbtn" id="sndBtn" onclick="toggleSound()">🔊</button>
+</div>
+
+<div id="npcPanel">
+  <div id="npcHead"><span id="npcName"></span><span id="npcGroup"></span></div>
+  <div id="npcMood"></div>
+  <div id="npcActions"></div>
+</div>
+
+<div id="toasts"></div>
+<div id="modal"><div id="modalContent"></div></div>
+
+<script>
+'use strict';
+/* =========================================================
+   AURA FARM — harvest emotional energy. Radiance vs Blight.
+   ========================================================= */
+
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const rnd = (a,b)=>a+Math.random()*(b-a);
+const $ = id=>document.getElementById(id);
+
+/* ---------------- static data ---------------- */
+const DAY_LEN = 120;
+const LAST_DAY = 12;
+const quotaFor = d => 90 + 55*(d-1);
+
+const TIERS = [
+  { min:0.92, name:'Transcendent', icon:'💎', color:'#9ef3ff' },
+  { min:0.75, name:'Brilliant',    icon:'🌟', color:'#ffd75e' },
+  { min:0.55, name:'Vivid',        icon:'✨', color:'#c79bff' },
+  { min:0.35, name:'Common',       icon:'🔸', color:'#d8d0f0' },
+  { min:0.00, name:'Faint',        icon:'·',  color:'#8a84a0' },
+];
+const tierOf = i => TIERS.find(t=>i>=t.min);
+
+const VENUES = [
+  { id:'park',   name:'Dawnlight Park',    desc:'Calm, sunny, forgiving. Emotions drift gently upward.',      ambient: 0.06, volMult:0.85, bloomAt:500,  sky:['#1b2a4a','#3a2f5c'], ground:'#16321f' },
+  { id:'club',   name:'The Neon Cellar',   desc:'Loud and volatile. Feelings spike fast in every direction.', ambient: 0.00, volMult:1.55, bloomAt:900,  sky:['#180a2e','#3d0f4f'], ground:'#1a0f2e' },
+  { id:'office', name:'Grindstone Offices',desc:'Fluorescent stress. Moods lean sour — rich soil for Blight.',ambient:-0.08, volMult:1.10, bloomAt:1300, sky:['#101622','#232c3d'], ground:'#1c2230' },
+];
+const venueById = id => VENUES.find(v=>v.id===id);
+
+/* Fixed rosters: id, name, group, baseline valence, volatility, resilience */
+const ROSTER = [
+  // Dawnlight Park (10)
+  { id:'p1', name:'Miles',  venue:'park', group:'The Joggers',      base: 0.35, vol:0.9, res:1.2 },
+  { id:'p2', name:'Dot',    venue:'park', group:'The Joggers',      base: 0.15, vol:1.2, res:1.0 },
+  { id:'p3', name:'Ferris', venue:'park', group:'The Joggers',      base:-0.10, vol:1.4, res:0.8 },
+  { id:'p4', name:'June',   venue:'park', group:'The Picnickers',   base: 0.45, vol:0.7, res:1.4 },
+  { id:'p5', name:'Olly',   venue:'park', group:'The Picnickers',   base: 0.10, vol:1.1, res:1.0 },
+  { id:'p6', name:'Petra',  venue:'park', group:'The Picnickers',   base:-0.20, vol:1.3, res:0.9 },
+  { id:'p7', name:'Sam',    venue:'park', group:'The Picnickers',   base: 0.25, vol:0.8, res:1.1 },
+  { id:'p8', name:'Quill',  venue:'park', group:'The Birdwatchers', base: 0.05, vol:0.6, res:1.3 },
+  { id:'p9', name:'Nan',    venue:'park', group:'The Birdwatchers', base: 0.30, vol:0.9, res:1.2 },
+  { id:'p10',name:'Theo',   venue:'park', group:'The Birdwatchers', base:-0.15, vol:1.0, res:0.9 },
+  // The Neon Cellar (14)
+  { id:'c1', name:'Vex',    venue:'club', group:'The House Regulars', base: 0.30, vol:1.5, res:1.0 },
+  { id:'c2', name:'Lola',   venue:'club', group:'The House Regulars', base: 0.20, vol:1.6, res:0.9 },
+  { id:'c3', name:'Bram',   venue:'club', group:'The House Regulars', base:-0.05, vol:1.3, res:1.1 },
+  { id:'c4', name:'Kiki',   venue:'club', group:'The House Regulars', base: 0.40, vol:1.4, res:1.2 },
+  { id:'c5', name:'Wren',   venue:'club', group:'The Wallflowers',    base:-0.30, vol:0.8, res:0.8 },
+  { id:'c6', name:'Moss',   venue:'club', group:'The Wallflowers',    base:-0.15, vol:0.7, res:1.0 },
+  { id:'c7', name:'Ivy',    venue:'club', group:'The Wallflowers',    base: 0.00, vol:0.9, res:1.1 },
+  { id:'c8', name:'Rocco',  venue:'club', group:'The Birthday Crew',  base: 0.55, vol:1.3, res:1.3 },
+  { id:'c9', name:'Tess',   venue:'club', group:'The Birthday Crew',  base: 0.35, vol:1.2, res:1.1 },
+  { id:'c10',name:'Gus',    venue:'club', group:'The Birthday Crew',  base: 0.15, vol:1.5, res:0.9 },
+  { id:'c11',name:'Mimi',   venue:'club', group:'The Birthday Crew',  base: 0.45, vol:1.1, res:1.2 },
+  { id:'c12',name:'Ash',    venue:'club', group:'The Bar Staff',      base:-0.10, vol:1.0, res:1.0 },
+  { id:'c13',name:'Ruby',   venue:'club', group:'The Bar Staff',      base: 0.10, vol:1.1, res:1.1 },
+  { id:'c14',name:'Cole',   venue:'club', group:'The Bar Staff',      base:-0.25, vol:1.2, res:0.8 },
+  // Grindstone Offices (12)
+  { id:'o1', name:'Brenda', venue:'office', group:'The Sales Pod', base:-0.15, vol:1.2, res:1.0 },
+  { id:'o2', name:'Chip',   venue:'office', group:'The Sales Pod', base: 0.20, vol:1.4, res:1.1 },
+  { id:'o3', name:'Dara',   venue:'office', group:'The Sales Pod', base:-0.30, vol:1.3, res:0.9 },
+  { id:'o4', name:'Ed',     venue:'office', group:'The Sales Pod', base:-0.05, vol:1.0, res:1.0 },
+  { id:'o5', name:'Fitz',   venue:'office', group:'The IT Cave',   base:-0.20, vol:0.7, res:1.2 },
+  { id:'o6', name:'Greta',  venue:'office', group:'The IT Cave',   base: 0.05, vol:0.8, res:1.3 },
+  { id:'o7', name:'Hank',   venue:'office', group:'The IT Cave',   base:-0.35, vol:0.9, res:0.8 },
+  { id:'o8', name:'Iris',   venue:'office', group:'The IT Cave',   base: 0.15, vol:0.6, res:1.4 },
+  { id:'o9', name:'Jules',  venue:'office', group:'The Managers',  base: 0.10, vol:1.1, res:1.1 },
+  { id:'o10',name:'Kip',    venue:'office', group:'The Managers',  base:-0.25, vol:1.3, res:0.9 },
+  { id:'o11',name:'Lena',   venue:'office', group:'The Managers',  base: 0.30, vol:1.0, res:1.2 },
+  { id:'o12',name:'Moe',    venue:'office', group:'The Managers',  base:-0.40, vol:1.4, res:0.7 },
+];
+const npcDef = id => ROSTER.find(n=>n.id===id);
+const GROUPS = [...new Set(ROSTER.map(n=>n.group))];
+const groupMembers = g => ROSTER.filter(n=>n.group===g);
+
+const ANCHORS = [[0.28,0.34],[0.72,0.30],[0.30,0.66],[0.72,0.66],[0.50,0.48]];
+
+/* Actions. dir: valence push direction. power: valence push. gain: intensity gain.
+   cost: focus. cd: cooldown s. aoe: hits whole social group. */
+const ACTIONS = {
+  hype:   { name:'Hype Up',        dir: 1, power:0.22, gain:0.09, cost:14, cd:0.8, base:true,  cls:'rad' },
+  snide:  { name:'Snide Remark',   dir:-1, power:0.22, gain:0.10, cost:14, cd:0.8, base:true,  cls:'bli' },
+  praise: { name:'Sincere Praise', dir: 1, power:0.40, gain:0.16, cost:26, cd:2.5, cls:'rad' },
+  insult: { name:'Cutting Insult', dir:-1, power:0.40, gain:0.18, cost:26, cd:2.5, cls:'bli' },
+  rally:  { name:'Rally',          dir: 1, power:0.25, gain:0.08, cost:34, cd:6, aoe:true, cls:'rad' },
+  rumor:  { name:'Spread Rumor',   dir:-1, power:0.25, gain:0.09, cost:34, cd:6, aoe:true, cls:'bli' },
+  tend:   { name:'Gentle Tend',    special:'tend',   cost:20, cd:3, cls:'rad' },
+  fester: { name:'Fester',         special:'fester', cost:20, cd:3, cls:'bli' },
+};
+
+const SHOP = [
+  { id:'praise', kind:'action', price:150, name:'Sincere Praise', desc:'Radiance. A strong, genuine push upward.' },
+  { id:'insult', kind:'action', price:150, name:'Cutting Insult', desc:'Blight. A strong shove downward.' },
+  { id:'rally',  kind:'action', price:300, name:'Rally',          desc:'Radiance. Lifts an entire social group at once.' },
+  { id:'rumor',  kind:'action', price:300, name:'Spread Rumor',   desc:'Blight. Sours an entire social group at once.' },
+  { id:'tend',   kind:'action', price:200, name:'Gentle Tend',    desc:'Halves a recovering NPC’s remaining recovery time.' },
+  { id:'fester', kind:'action', price:200, name:'Fester',         desc:'Target’s mood stops drifting back for 20s.' },
+  { id:'sight',  kind:'upg',    price:120, name:'Aura Sight',     desc:'See exact charge % above every head.' },
+  { id:'patient',kind:'upg',    price:250, name:'Patient Eye',    desc:'Peak windows last 50% longer.' },
+  { id:'reson',  kind:'upg',    price:400, name:'Deep Resonance', desc:'All harvests yield +15%.' },
+];
+
+/* ---------------- persistent meta ---------------- */
+let meta = { case:{}, muted:false, seenHow:false, bestPurity:null, endings:[] };
+try { const m = localStorage.getItem('auraFarmMeta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch(e) {}
+function saveMeta(){ try { localStorage.setItem('auraFarmMeta', JSON.stringify(meta)); } catch(e) {} }
+
+/* ---------------- run state ---------------- */
+let run = null;
+function newRun(){
+  const npcs = {};
+  for (const d of ROSTER) {
+    npcs[d.id] = { v:clamp(d.base + rnd(-0.15,0.15), -1, 1), i:rnd(0.03,0.12), state:'idle',
+      recoverT:0, peak:0, peakDur:0, momentum:1, lastDir:0, eventT:rnd(4,18), festerT:0,
+      x:0, y:0, tx:0, ty:0, moveT:0, placed:false, bob:rnd(0,6.28) };
+  }
+  return { day:1, dayT:DAY_LEN, dayEarned:0, essence:0, rad:0, bli:0, focus:100,
+    venue:'park', harvests:0, npcs,
+    zones:{ park:{total:0,rad:0,bli:0,bloomed:null}, club:{total:0,rad:0,bli:0,bloomed:null}, office:{total:0,rad:0,bli:0,bloomed:null} },
+    unlocked:{ park:true, club:false, office:false },
+    owned:{ hype:true, snide:true }, upgrades:{} };
+}
+function saveRun(){ try { if (run) localStorage.setItem('auraFarmRun', JSON.stringify(run)); else localStorage.removeItem('auraFarmRun'); } catch(e) {} }
+function loadRun(){ try { const r = localStorage.getItem('auraFarmRun'); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+
+/* ---------------- audio ---------------- */
+let AC = null;
+function ac(){ if (!AC) { try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e) {} } return AC; }
+function beep(freq, dur, type, vol, when){
+  if (meta.muted) return; const c = ac(); if (!c) return;
+  const t = c.currentTime + (when||0);
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type||'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol||0.08, t); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.02);
+}
+const sfx = {
+  tap: ()=>beep(520,0.06,'triangle',0.05),
+  act: (dir)=>beep(dir>0?660:240,0.10,dir>0?'triangle':'sawtooth',0.06),
+  peak: ()=>{ beep(880,0.15,'sine',0.08); beep(1320,0.2,'sine',0.05,0.08); },
+  harvR: ()=>{ beep(660,0.12,'sine',0.09); beep(990,0.15,'sine',0.08,0.09); beep(1320,0.25,'sine',0.07,0.18); },
+  harvB: ()=>{ beep(320,0.15,'sawtooth',0.09); beep(160,0.3,'sawtooth',0.08,0.1); },
+  buy: ()=>{ beep(700,0.08,'square',0.05); beep(1050,0.12,'square',0.05,0.07); },
+  fail: ()=>{ beep(300,0.3,'sawtooth',0.08); beep(200,0.5,'sawtooth',0.08,0.2); },
+  day: ()=>{ beep(523,0.15,'sine',0.07); beep(659,0.15,'sine',0.07,0.12); beep(784,0.3,'sine',0.07,0.24); },
+};
+function toggleSound(){ meta.muted = !meta.muted; $('sndBtn').textContent = meta.muted?'🔇':'🔊'; saveMeta(); }
+
+/* ---------------- canvas ---------------- */
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  const ow = W, oh = H;
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W*DPR; cv.height = H*DPR; cv.style.width = W+'px'; cv.style.height = H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if (run && ow && oh) for (const id in run.npcs) { const n = run.npcs[id];
+    n.x *= W/ow; n.y *= H/oh; n.tx *= W/ow; n.ty *= H/oh; }
+}
+window.addEventListener('resize', resize); resize();
+const playTop = ()=>96, playBot = ()=>H-190;
+
+/* ---------------- game flow ---------------- */
+let mode = 'title';        // title | play | over | ending
+let modalOpen = false;
+let selected = null;       // npc id
+let particles = [];
+let cooldowns = {};        // actionId -> seconds left
+let toastTimes = [];
+
+function startGame(fresh){
+  run = fresh ? newRun() : (loadRun() || newRun());
+  selected = null; cooldowns = {}; particles = [];
+  mode = 'play'; closeModal();
+  $('hud').style.display = 'flex'; $('menuBtns').style.display = 'flex';
+  $('sndBtn').textContent = meta.muted?'🔇':'🔊';
+  placeNPCs();
+  if (fresh) { toast('Day 1 — meet your quota of ✦'+quotaFor(1)+' before dusk.');
+    setTimeout(()=>{ if(mode==='play') toast('Tap someone to read their aura.'); }, 3500); }
+  updateHud();
+}
+
+function placeNPCs(){
+  const groups = {}; let gi = 0;
+  for (const g of GROUPS) groups[g] = ANCHORS[(gi++) % ANCHORS.length];
+  for (const d of ROSTER) {
+    const n = run.npcs[d.id];
+    if (!(n.placed && n.x)) {
+      const a = groups[d.group];
+      n.x = a[0]*W + rnd(-70,70); n.y = playTop() + a[1]*(playBot()-playTop()) + rnd(-50,50);
+      n.tx = n.x; n.ty = n.y; n.placed = true;
+    }
+    n.x = clamp(n.x, 40, W-40); n.y = clamp(n.y, playTop()+30, playBot()-10);
+    n.tx = clamp(n.tx, 40, W-40); n.ty = clamp(n.ty, playTop()+30, playBot()-10);
+  }
+}
+function groupAnchor(g){ const gi = GROUPS.indexOf(g); return ANCHORS[gi % ANCHORS.length]; }
+
+/* ---------------- helpers ---------------- */
+function karma(){ const t = run.rad + run.bli; return t<1 ? 0 : (run.rad - run.bli)/t; }
+function setBonus(){
+  let done = 0;
+  for (const g of GROUPS) if (groupMembers(g).every(m=>meta.case[m.id])) done++;
+  return 1 + done*0.05;
+}
+function setsDone(){ return GROUPS.filter(g=>groupMembers(g).every(m=>meta.case[m.id])).length; }
+function yieldMult(sign, zone){
+  let m = setBonus();
+  if (run.upgrades.reson) m *= 1.15;
+  const z = run.zones[zone];
+  if (z.bloomed==='blight' && sign<0) m *= 1.25;
+  if (z.bloomed==='turb') m *= 1.10;
+  return m;
+}
+function repMod(dir){
+  const k = karma();
+  if (k > 0.4) return dir>0 ? 1.1 : 0.75;
+  if (k < -0.4) return dir<0 ? 1.1 : 0.75;
+  return 1;
+}
+function moodText(n){
+  if (n.state==='husk') return 'Hollow. Nothing left to feel.';
+  if (n.state==='recover') return 'Glowing softly, spent — recovering ('+Math.ceil(n.recoverT)+'s).';
+  const v = n.v, i = n.i;
+  let m;
+  if (v > 0.5)      m = i>0.7?'Euphoric':i>0.4?'Delighted':'Content';
+  else if (v > 0.15) m = i>0.7?'Excited':i>0.4?'Upbeat':'Pleasant';
+  else if (v > -0.15)m = i>0.6?'Restless':'Neutral';
+  else if (v > -0.5) m = i>0.7?'Seething':i>0.4?'Gloomy':'Irritable';
+  else               m = i>0.7?'Despairing':i>0.4?'Miserable':'Down';
+  if (n.peak>0) m += ' — ⚡ PEAK ('+Math.ceil(n.peak)+'s)';
+  else if (i>0.6) m += ' — aura swelling…';
+  return m;
+}
+
+/* ---------------- actions ---------------- */
+function actUsable(actId, n){
+  const a = ACTIONS[actId];
+  const stateOk = a.special==='tend' ? n.state==='recover' : n.state==='idle';
+  return stateOk && run.focus >= a.cost && (cooldowns[actId]||0) <= 0;
+}
+function doAction(actId){
+  if (!run || mode!=='play' || modalOpen) return;
+  const act = ACTIONS[actId]; const n = selected && run.npcs[selected];
+  if (!act || !n || !actUsable(actId, n)) return;
+  run.focus -= act.cost; cooldowns[actId] = act.cd;
+
+  if (act.special==='tend') {
+    n.recoverT *= 0.5; sfx.act(1); puff(n.x, n.y, '#8effc1', 8);
+    return renderPanel();
+  }
+  if (act.special==='fester') {
+    n.festerT = 20; sfx.act(-1); puff(n.x, n.y, '#a86bff', 8); return renderPanel();
+  }
+
+  const def = npcDef(selected);
+  const targets = act.aoe ? groupMembers(def.group).map(m=>run.npcs[m.id]).filter(t=>t.state==='idle') : [n];
+  for (const t of targets) pushEmotion(t, act, npcDef(ROSTER.find(r=>run.npcs[r.id]===t).id));
+  sfx.act(act.dir);
+  renderPanel();
+}
+function pushEmotion(n, act, def){
+  const mod = repMod(act.dir);
+  n.v = clamp(n.v + act.dir*act.power*(1-Math.abs(n.v)*0.4)*mod, -1, 1);
+  if (n.lastDir === act.dir) n.momentum = Math.min(2, n.momentum + 0.25);
+  else { n.momentum = 1; n.i *= 0.85; }
+  n.lastDir = act.dir;
+  const cap = act.dir>0 ? 0.95 : 1.0;
+  const volm = def.vol * venueById(def.venue).volMult * (run.zones[def.venue].bloomed==='turb'?1.5:1);
+  n.i = clamp(n.i + act.gain*n.momentum*volm*mod, 0, cap);
+  puff(n.x, n.y-20, act.dir>0?'#ffd75e':'#a86bff', 5);
+}
+
+function harvest(){
+  if (!run || mode!=='play' || modalOpen) return;
+  const n = selected && run.npcs[selected]; if (!n || n.state!=='idle') return;
+  if (run.focus < 10) return;
+  const def = npcDef(selected);
+  const sign = n.v >= 0 ? 1 : -1;
+  if (Math.abs(n.v) < 0.25) { toast('Their feeling is too faint to harvest. Push it further.'); return; }
+  run.focus -= 10;
+
+  const amt = Math.round(n.i * 100 * (sign<0 ? 1.6 : 1.0) * yieldMult(sign, def.venue));
+  run.essence += amt; run.dayEarned += amt; run.harvests++;
+  if (sign>0) run.rad += amt; else run.bli += amt;
+  const z = run.zones[def.venue]; z.total += amt; if (sign>0) z.rad += amt; else z.bli += amt;
+
+  // specimen
+  const t = tierOf(n.i);
+  const prev = meta.case[def.id];
+  if (!prev || n.i > prev.i) {
+    meta.case[def.id] = { i:+n.i.toFixed(3), tier:t.name, type:sign>0?'radiance':'blight' };
+    saveMeta();
+    toast(t.icon+' '+t.name+' specimen: '+def.name+(prev?' (upgraded!)':''));
+    const before = prev ? 0 : setsDone();
+    if (!prev && setsDone() > before) { toast('🏆 Set complete: '+def.group+' — +5% all yields, forever.'); }
+  }
+
+  burst(n.x, n.y, sign>0?'#ffd75e':'#c79bff', Math.round(10+n.i*22));
+  floatText(n.x, n.y-34, '+'+amt+' ✦', sign>0?'#ffd75e':'#c79bff');
+  if (sign>0) { sfx.harvR(); n.state='recover'; n.recoverT = 28/def.res; n.i = 0; n.v *= 0.5; n.peak = 0; }
+  else { sfx.harvB(); n.state='husk'; n.i = 0; n.peak = 0; toast(def.name+' goes quiet. They won’t feel again this run.'); }
+
+  checkBloom(def.venue);
+  renderPanel(); updateHud();
+}
+
+function checkBloom(vid){
+  const z = run.zones[vid], vd = venueById(vid);
+  if (z.bloomed || z.total < vd.bloomAt) return;
+  const rr = z.rad / Math.max(1, z.total);
+  z.bloomed = rr >= 0.6 ? 'bloom' : (rr <= 0.4 ? 'blight' : 'turb');
+  const label = z.bloomed==='bloom' ? '🌸 blooms with light' : z.bloomed==='blight' ? '🥀 curdles into blight' : '🌪 turns turbulent';
+  toast(vd.name+' '+label+'!'); sfx.peak();
+  const idx = VENUES.findIndex(v=>v.id===vid);
+  if (idx+1 < VENUES.length && !run.unlocked[VENUES[idx+1].id]) {
+    run.unlocked[VENUES[idx+1].id] = true;
+    toast('🗺️ New venue unlocked: '+VENUES[idx+1].name);
+  }
+}
+
+/* ---------------- simulation ---------------- */
+function update(dt){
+  if (mode!=='play' || modalOpen) return;
+  run.focus = clamp(run.focus + 6*dt, 0, 100);
+  for (const k in cooldowns) cooldowns[k] = Math.max(0, cooldowns[k]-dt);
+
+  run.dayT -= dt;
+  if (run.dayT <= 0) return endDay();
+
+  const cur = run.venue;
+  const huskList = [];
+  for (const d of ROSTER) { const n = run.npcs[d.id]; if (n.state==='husk' && d.venue===cur) huskList.push(n); }
+
+  for (const d of ROSTER) {
+    const n = run.npcs[d.id];
+    const inCur = d.venue === cur;
+    if (n.state==='recover') {
+      n.recoverT -= dt * (inCur?1:0.6);
+      n.v += (d.base+0.2 - n.v)*0.03*dt;
+      if (n.recoverT <= 0) { n.state='idle'; n.i = 0.05; n.momentum = 1; }
+      continue;
+    }
+    if (n.state==='husk') { if (inCur) wander(n, d, dt, 0.35); continue; }
+    if (!inCur) { n.v += (d.base - n.v)*0.01*dt; n.i = Math.max(0.05, n.i - 0.004*dt); continue; }
+
+    const vd = venueById(d.venue), z = run.zones[d.venue];
+    // drift toward baseline + ambiance
+    const driftMult = n.festerT>0 ? 0.25 : 1;
+    let target = d.base + vd.ambient + (z.bloomed==='bloom'?0.12:0) + (z.bloomed==='blight'?-0.12:0);
+    n.v += (clamp(target,-1,1) - n.v)*0.018*dt*driftMult;
+    if (n.festerT>0) n.festerT -= dt;
+
+    // life events: spontaneous emotional weather — observation matters
+    n.eventT -= dt * d.vol * vd.volMult;
+    if (n.eventT <= 0) {
+      n.eventT = rnd(9, 26);
+      n.v = clamp(n.v + rnd(-0.5,0.5)*d.vol, -1, 1);
+      n.i = clamp(n.i + rnd(0.08,0.3)*d.vol, 0, 1);
+      puff(n.x, n.y-18, n.v>=0?'#ffe9a8':'#d0b0ff', 3);
+    }
+
+    // group contagion
+    let gs = 0, gc = 0;
+    for (const m of groupMembers(d.group)) { if (m.id===d.id) continue;
+      const o = run.npcs[m.id]; if (o.state!=='idle') continue;
+      gs += o.v; gc++; }
+    if (gc) n.v += (gs/gc - n.v) * 0.03 * dt * (z.bloomed==='blight'?2:1);
+
+    // husk gloom
+    for (const h of huskList) { const dx=h.x-n.x, dy=h.y-n.y;
+      if (dx*dx+dy*dy < 110*110) n.v = clamp(n.v - 0.012*dt, -1, 1); }
+
+    // intensity decay
+    if (n.peak <= 0) n.i = Math.max(0.04, n.i - 0.008*dt);
+
+    // ripening: peak windows
+    if (n.peak > 0) {
+      n.peak -= dt;
+      const cap = n.v>=0 ? 0.95 : 1.0;
+      n.i = clamp(n.i + 0.02*dt*d.vol, 0, cap);
+      if (n.peak <= 0) { // missed it — the feeling vents
+        n.i = 0.18; if (n.v < 0) n.v *= 0.4;
+        puff(n.x, n.y-20, '#888', 6);
+        if (selected===d.id) renderPanel();
+      }
+    } else if (n.i >= 0.75) {
+      n.peakDur = (n.v>=0 ? 12 : 5) * (run.upgrades.patient?1.5:1);
+      n.peak = n.peakDur;
+      sfx.peak(); puff(n.x, n.y-26, '#fff', 10);
+      if (selected===d.id) renderPanel();
+    }
+
+    wander(n, d, dt, 1);
+  }
+
+  // keep people from standing inside each other
+  const curNpcs = ROSTER.filter(d=>d.venue===cur).map(d=>run.npcs[d.id]);
+  for (let a=0; a<curNpcs.length; a++) for (let b=a+1; b<curNpcs.length; b++) {
+    const A = curNpcs[a], B = curNpcs[b];
+    const dx = B.x-A.x, dy = B.y-A.y, dist = Math.hypot(dx,dy) || 0.01;
+    if (dist < 42) {
+      const push = (42-dist) * 0.5 * Math.min(1, dt*6);
+      const ux = dx/dist, uy = dy/dist;
+      A.x = clamp(A.x - ux*push, 36, W-36); A.y = clamp(A.y - uy*push, playTop()+28, playBot()-8);
+      B.x = clamp(B.x + ux*push, 36, W-36); B.y = clamp(B.y + uy*push, playTop()+28, playBot()-8);
+    }
+  }
+
+  // occasional panel refresh so mood text stays honest
+  panelT -= dt; if (panelT<=0){ panelT = 0.5; if (selected) renderPanel(true); }
+  updateHud();
+}
+let panelT = 0;
+
+function wander(n, d, dt, speedMult){
+  n.moveT -= dt;
+  if (n.moveT <= 0) {
+    n.moveT = rnd(2.5, 7);
+    const a = groupAnchor(d.group);
+    const ax = a[0]*W, ay = playTop() + a[1]*(playBot()-playTop());
+    n.tx = clamp(ax + rnd(-85,85), 36, W-36);
+    n.ty = clamp(ay + rnd(-65,65), playTop()+28, playBot()-8);
+  }
+  const dx = n.tx-n.x, dy = n.ty-n.y, dist = Math.hypot(dx,dy);
+  if (dist > 2) { const sp = 16*speedMult; n.x += dx/dist*sp*dt; n.y += dy/dist*sp*dt; }
+}
+
+/* ---------------- day / run flow ---------------- */
+function endDay(){
+  const met = run.dayEarned >= quotaFor(run.day);
+  if (!met) { sfx.fail(); return gameOver(); }
+  sfx.day();
+  if (run.day >= LAST_DAY) return ending();
+  showModal(`
+    <h2>Dusk falls on Day ${run.day}</h2>
+    <div class="sub">Quota met. The farm endures.</div>
+    <div class="statline"><span>Harvested today</span><b>✦ ${run.dayEarned}</b></div>
+    <div class="statline"><span>Quota</span><b>✦ ${quotaFor(run.day)}</b></div>
+    <div class="statline"><span>Tomorrow’s quota</span><b>✦ ${quotaFor(run.day+1)}</b></div>
+    <div class="statline"><span>Balance</span><b style="color:#ffd75e">✦ ${run.essence}</b></div>
+    <button class="big" onclick="nextDay()">Begin Day ${run.day+1} ➜</button>
+  `, true, true);
+}
+function nextDay(){
+  run.day++; run.dayT = DAY_LEN; run.dayEarned = 0; run.focus = 100;
+  for (const d of ROSTER) { const n = run.npcs[d.id];
+    if (n.state==='recover') { n.recoverT = Math.max(0, n.recoverT - 20); if (n.recoverT<=0){ n.state='idle'; n.i=0.05; } } }
+  saveRun(); saveMeta(); closeModal();
+  toast('☀️ Day '+run.day+' — quota ✦'+quotaFor(run.day));
+}
+function gameOver(){
+  mode = 'over';
+  const p = Math.round(100 * run.rad / Math.max(1, run.rad+run.bli));
+  showModal(`
+    <h2>The Farm Withers</h2>
+    <div class="sub">Day ${run.day} ended at ✦${run.dayEarned} of the ✦${quotaFor(run.day)} quota. The aura wells run dry.</div>
+    <div class="statline"><span>Days survived</span><b>${run.day}</b></div>
+    <div class="statline"><span>Total harvested</span><b>✦ ${run.rad+run.bli}</b></div>
+    <div class="statline"><span>Radiance purity</span><b>${p}%</b></div>
+    <div class="statline"><span>Specimens kept</span><b>${Object.keys(meta.case).length} / ${ROSTER.length}</b></div>
+    <div class="sub" style="margin-top:10px">Your specimen case survives. Every set bonus carries into the next run.</div>
+    <button class="big" onclick="restart()">Farm Again</button>
+    <button class="big ghost" onclick="toTitle()">Title</button>
+  `, true);
+  run = null; saveRun();
+}
+function ending(){
+  mode = 'ending';
+  const total = run.rad + run.bli;
+  const p = run.rad / Math.max(1,total);
+  const pct = Math.round(p*100);
+  let title, line;
+  if (p >= 0.85) { title = '🌞 The Luminary'; line = 'You farmed light and left every field brighter than you found it. The auras will feed you forever.'; }
+  else if (p <= 0.15) { title = '🥀 The Reaper of Vibes'; line = 'You drank deep and left husks in your wake. A magnificent, terrible harvest — and a silent farm.'; }
+  else { title = '⚖️ The Gray Broker'; line = 'Light when it paid, blight when it didn’t. The farm neither blooms nor dies. It waits.'; }
+  const specs = Object.values(meta.case);
+  const avgI = specs.length ? specs.reduce((s,x)=>s+x.i,0)/specs.length : 0;
+  const grade = specs.length>=30&&avgI>=0.8?'S':specs.length>=22&&avgI>=0.65?'A':specs.length>=14&&avgI>=0.5?'B':'C';
+  if (!meta.endings.includes(title)) meta.endings.push(title);
+  meta.bestPurity = pct; saveMeta();
+  showModal(`
+    <h2>${title}</h2>
+    <div class="sub">${line}</div>
+    <div class="statline"><span>Radiance purity</span><b>${pct}%</b></div>
+    <div class="statline"><span>Lifetime harvest</span><b>✦ ${total}</b></div>
+    <div class="statline"><span>Specimen case</span><b>${specs.length}/${ROSTER.length} · avg ${(avgI*100)|0}% · grade ${grade}</b></div>
+    <div class="statline"><span>Sets completed</span><b>${setsDone()} / ${GROUPS.length}</b></div>
+    <button class="big" onclick="restart()">Farm Again</button>
+    <button class="big ghost" onclick="toTitle()">Title</button>
+  `, true);
+  run = null; saveRun();
+}
+function restart(){ closeModal(); startGame(true); }
+function toTitle(){ closeModal(); titleScreen(); }
+
+/* ---------------- UI: hud, panel, toasts, particles ---------------- */
+function updateHud(){
+  if (!run) return;
+  $('dayLbl').textContent = 'Day '+run.day;
+  const s = Math.max(0, Math.ceil(run.dayT));
+  $('timeLbl').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  $('essenceLbl').textContent = '✦ '+run.essence;
+  const q = quotaFor(run.day);
+  $('quotaFill').style.width = clamp(100*run.dayEarned/q,0,100)+'%';
+  $('quotaTxt').textContent = run.dayEarned+' / '+q;
+  $('focusFill').style.width = run.focus+'%';
+  const k = (karma()+1)/2; // 0 blight .. 1 radiance
+  const col = blend('#a86bff','#ffd75e',k);
+  $('orb').style.background = 'radial-gradient(circle at 35% 35%, #fff8, transparent 60%), '+col;
+  $('orb').style.boxShadow = '0 0 12px 3px '+col+'88';
+}
+function blend(c1,c2,t){
+  const p = h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const a=p(c1),b=p(c2);
+  return 'rgb('+a.map((x,i)=>Math.round(lerp(x,b[i],t))).join(',')+')';
+}
+
+function renderPanel(soft){
+  const panel = $('npcPanel');
+  if (!selected || !run) { panel.style.display='none'; return; }
+  const d = npcDef(selected), n = run.npcs[selected];
+  if (d.venue !== run.venue) { selected=null; panel.style.display='none'; return; }
+  panel.style.display = 'block';
+  $('npcName').textContent = d.name;
+  $('npcGroup').textContent = d.group;
+  $('npcMood').textContent = moodText(n);
+  if (soft) { // just refresh disabled states + mood
+    for (const btn of $('npcActions').querySelectorAll('.act[data-a]')) {
+      const a = ACTIONS[btn.dataset.a];
+      btn.disabled = !actUsable(btn.dataset.a, n);
+      const veil = btn.querySelector('.cdveil');
+      if (veil) veil.style.transform = 'scaleX('+clamp((cooldowns[btn.dataset.a]||0)/a.cd,0,1)+')';
+    }
+    const hb = $('npcActions').querySelector('.act[data-h]');
+    if (hb) refreshHarvestBtn(hb, n);
+    return;
+  }
+  const box = $('npcActions'); box.innerHTML = '';
+  for (const id in ACTIONS) {
+    if (!run.owned[id]) continue;
+    const a = ACTIONS[id];
+    const b = document.createElement('button');
+    b.className = 'act '+a.cls; b.dataset.a = id;
+    b.innerHTML = a.name+'<span class="cost">'+a.cost+' focus'+(a.aoe?' · group':'')+'</span><div class="cdveil" style="transform:scaleX(0)"></div>';
+    b.onclick = ()=>doAction(id);
+    b.disabled = !actUsable(id, n);
+    box.appendChild(b);
+  }
+  const hb = document.createElement('button');
+  hb.dataset.h = '1'; hb.onclick = harvest;
+  refreshHarvestBtn(hb, n);
+  box.appendChild(hb);
+}
+function refreshHarvestBtn(hb, n){
+  const sign = n.v>=0?1:-1;
+  const ready = n.state==='idle' && Math.abs(n.v)>=0.25 && run.focus>=10;
+  hb.className = 'act '+(sign>0?'harv':'harvB');
+  hb.innerHTML = (sign>0?'Harvest ✦ Radiance':'Drain ✦ Blight')+'<span class="cost">'+(sign>0?'they recover':'permanent')+' · ~'+Math.round(n.i*100*(sign<0?1.6:1)*yieldMult(sign, npcDef(selected).venue))+'✦</span>';
+  hb.disabled = !ready;
+}
+
+function toast(msg){
+  const t = document.createElement('div'); t.className='toast'; t.textContent = msg;
+  $('toasts').appendChild(t);
+  while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
+  setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; setTimeout(()=>t.remove(), 420); }, 3400);
+}
+
+function puff(x,y,color,n){ for(let i=0;i<n;i++) particles.push({x,y,vx:rnd(-30,30),vy:rnd(-60,-10),life:rnd(.4,.9),t:0,color,r:rnd(1.5,3.5)}); }
+function burst(x,y,color,n){ for(let i=0;i<n;i++){ const a=rnd(0,6.283),sp=rnd(40,140); particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-30,life:rnd(.5,1.1),t:0,color,r:rnd(2,4.5)}); } }
+function floatText(x,y,txt,color){ particles.push({x,y,vx:0,vy:-34,life:1.3,t:0,color,txt}); }
+
+/* ---------------- modal screens ---------------- */
+let stickyModal = false;
+function showModal(html, center, sticky){
+  modalOpen = true; stickyModal = !!sticky;
+  $('modal').style.display = 'flex';
+  $('modal').className = center ? 'center' : '';
+  $('modalContent').innerHTML = html;
+}
+function closeModal(){ modalOpen = false; stickyModal = false; $('modal').style.display = 'none'; }
+$('modal').addEventListener('click', e=>{ if (e.target.id==='modal' && mode==='play' && !stickyModal) closeModal(); });
+
+function openShop(){
+  if (mode!=='play') return; sfx.tap();
+  let rows = '';
+  for (const it of SHOP) {
+    const owned = it.kind==='action' ? run.owned[it.id] : run.upgrades[it.id];
+    rows += `<div class="shopItem"><div class="info"><div class="nm">${it.name}</div><div class="ds">${it.desc}</div></div>`
+      + (owned ? '<div class="owned">owned</div>'
+               : `<button class="buyBtn" ${run.essence<it.price?'disabled':''} onclick="buyItem('${it.id}')">✦ ${it.price}</button>`)
+      + '</div>';
+  }
+  showModal(`<h2>Techniques</h2><div class="sub">Balance: <b style="color:#ffd75e">✦ ${run.essence}</b> — spending doesn’t affect quota progress.</div>${rows}<button class="big ghost" onclick="closeModal()">Close</button>`);
+}
+function buyItem(id){
+  const it = SHOP.find(s=>s.id===id);
+  if (!it || run.essence < it.price) return;
+  run.essence -= it.price;
+  if (it.kind==='action') run.owned[id] = true; else run.upgrades[id] = true;
+  sfx.buy(); saveRun(); openShop(); renderPanel(); updateHud();
+}
+
+function openCase(){
+  if (mode!=='play') return; sfx.tap();
+  let html = '';
+  for (const v of VENUES) {
+    html += `<h3>${v.name}</h3>`;
+    for (const g of GROUPS) {
+      const mem = groupMembers(g).filter(m=>m.venue===v.id);
+      if (!mem.length) continue;
+      const done = mem.every(m=>meta.case[m.id]);
+      html += `<div class="caseGroup"><div style="font-size:12px;margin-bottom:4px">${g} ${done?'<span class="setDone">SET ✓ +5%</span>':''}</div><div class="caseRow">`;
+      for (const m of mem) {
+        const s = meta.case[m.id];
+        html += s
+          ? `<div class="spec" style="border:1px solid ${tierOf(s.i).color}55"><span class="tier">${tierOf(s.i).icon}</span>${m.name}<br><span style="color:${tierOf(s.i).color}">${Math.round(s.i*100)}%</span></div>`
+          : `<div class="spec empty"><span class="tier">?</span>${m.name}<br>&nbsp;</div>`;
+      }
+      html += '</div></div>';
+    }
+  }
+  showModal(`<h2>Specimen Case</h2><div class="sub">${Object.keys(meta.case).length}/${ROSTER.length} peak auras · re-capture at higher charge to upgrade. Kept forever.</div>${html}<button class="big ghost" onclick="closeModal()">Close</button>`);
+}
+
+function openMap(){
+  if (mode!=='play') return; sfx.tap();
+  let html = '';
+  for (const v of VENUES) {
+    const un = run.unlocked[v.id], z = run.zones[v.id];
+    const tag = z.bloomed==='bloom'?'<span class="tag bloom">BLOOMING</span>':z.bloomed==='blight'?'<span class="tag blight">BLIGHTED</span>':z.bloomed==='turb'?'<span class="tag turb">TURBULENT</span>':'';
+    html += `<div class="venueCard ${run.venue===v.id?'cur':''} ${un?'':'lock'}" ${un?`onclick="goVenue('${v.id}')"`:''}>
+      <div class="nm">${v.name} ${tag}</div><div class="ds">${un ? v.desc + (z.bloomed?'':' · bloom at ✦'+v.bloomAt+' ('+z.total+')') : '🔒 Push a previous venue to its bloom threshold to unlock.'}</div></div>`;
+  }
+  showModal(`<h2>Venues</h2><div class="sub">Each venue keeps its own emotional weather — and remembers how you farmed it.</div>${html}<button class="big ghost" onclick="closeModal()">Close</button>`);
+}
+function goVenue(id){
+  if (!run.unlocked[id]) return;
+  run.venue = id; selected = null; renderPanel(); closeModal(); sfx.tap();
+  toast('➜ '+venueById(id).name);
+}
+
+function howTo(back){
+  showModal(`<h2>How to Farm</h2><div class="howto">
+  <p>People give off <b>aura</b> — emotional energy. You harvest it. Meet the daily quota by dusk or the farm withers.</p>
+  <p><span class="gold">Radiance</span>: lift someone up, harvest their joy. Slower — but they <b>recover</b> and can be farmed again.</p>
+  <p><span class="viol">Blight</span>: grind someone down, drain their misery. Pays 1.6× and spikes higher — but it’s <b>permanent</b>. They become a husk, and husks spread gloom to everyone nearby.</p>
+  <p><b>Timing is the skill.</b> An aura ring pulses faster as feeling builds. At high charge a <b>⚡ peak window</b> opens — harvest inside it for the best specimens. Too early: a weak specimen forever. Too late: the feeling vents to nothing. Blight peaks are short and sharp; Radiance peaks are wide and repeatable.</p>
+  <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. Re-capture to upgrade.</p>
+  <p>Your own aura shows what you are. Lean hard one way and the world responds — your opposite touch weakens.</p>
+  </div><button class="big" onclick="${back==='title'?'titleScreen()':'closeModal()'}">Got it</button>`, true);
+  meta.seenHow = true; saveMeta();
+}
+
+function titleScreen(){
+  mode = 'title'; run = null; selected = null;
+  $('hud').style.display='none'; $('menuBtns').style.display='none'; $('npcPanel').style.display='none';
+  const hasSave = !!loadRun();
+  const specs = Object.keys(meta.case).length;
+  showModal(`<div class="titleWrap"><h1>AURA FARM</h1><div class="tg">harvest feelings · choose what you become</div></div>
+    ${specs?`<div class="sub" style="text-align:center">📦 ${specs}/${ROSTER.length} specimens kept · ${setsDone()} sets${meta.bestPurity!==null?' · last purity '+meta.bestPurity+'%':''}</div>`:''}
+    ${hasSave?'<button class="big" onclick="startGame(false)">Continue Run</button>':''}
+    <button class="big ${hasSave?'ghost':''}" onclick="confirmNew()">New Run</button>
+    <button class="big ghost" onclick="howTo('title')">How to Farm</button>`, true);
+}
+function confirmNew(){
+  if (loadRun()) {
+    showModal(`<h2>Start over?</h2><div class="sub">Your current run (mid-farm) will be abandoned. The specimen case is safe either way.</div>
+      <button class="big" onclick="startGame(true)">Abandon &amp; Start Fresh</button>
+      <button class="big ghost" onclick="titleScreen()">Back</button>`, true);
+  } else if (!meta.seenHow) { howToThenStart(); }
+  else startGame(true);
+}
+function howToThenStart(){
+  showModal(`<h2>How to Farm</h2><div class="howto">
+  <p>Tap a person. <span class="gold">Hype them up</span> or <span class="viol">put them down</span> to build their emotional charge, then <b>harvest</b> it as essence. Meet the quota before the 2-minute day ends.</p>
+  <p><span class="gold">Radiance</span> is renewable. <span class="viol">Blight</span> pays more but husks the person permanently. Watch the ring: harvest inside the <b>⚡ peak window</b> for the finest specimens.</p>
+  </div><button class="big" onclick="startGame(true)">Start Farming</button>`, true);
+  meta.seenHow = true; saveMeta();
+}
+
+/* ---------------- input ---------------- */
+cv.addEventListener('pointerdown', e=>{
+  if (mode!=='play' || modalOpen || !run) return;
+  ac(); // wake audio on gesture
+  const x = e.clientX, y = e.clientY;
+  let best = null, bd = 44*44;
+  for (const d of ROSTER) {
+    if (d.venue!==run.venue) continue;
+    const n = run.npcs[d.id];
+    const dx = n.x-x, dy = n.y-y, dist = dx*dx+dy*dy;
+    if (dist < bd) { bd = dist; best = d.id; }
+  }
+  if (best) { selected = best; sfx.tap(); renderPanel(); }
+  else { selected = null; renderPanel(); }
+});
+
+/* ---------------- rendering ---------------- */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  if (!run || (mode!=='play' && mode!=='over' && mode!=='ending')) { drawBgTitle(); return; }
+  const vd = venueById(run.venue), z = run.zones[run.venue];
+  drawVenue(vd, z);
+  const t = performance.now()/1000;
+  for (const d of ROSTER) {
+    if (d.venue!==run.venue) continue;
+    drawNPC(d, run.npcs[d.id], t);
+  }
+  drawParticles();
+}
+function drawBgTitle(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#141028'); g.addColorStop(1,'#0b0a14');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  const t = performance.now()/1000;
+  for (let i=0;i<24;i++){
+    const x = (i*97.3)%W, y = (i*173.7 + t*12*(1+(i%3)))%H;
+    ctx.globalAlpha = 0.25+0.2*Math.sin(t+i);
+    ctx.fillStyle = i%2 ? '#ffd75e' : '#a86bff';
+    ctx.beginPath(); ctx.arc(x, H-y, 2.2, 0, 6.283); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function drawVenue(vd, z){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  let s0 = vd.sky[0], s1 = vd.sky[1];
+  g.addColorStop(0,s0); g.addColorStop(1,s1);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  if (z.bloomed==='bloom') { ctx.fillStyle='rgba(140,255,190,0.06)'; ctx.fillRect(0,0,W,H); }
+  if (z.bloomed==='blight'){ ctx.fillStyle='rgba(90,30,140,0.14)'; ctx.fillRect(0,0,W,H); }
+  // ground
+  ctx.fillStyle = vd.ground;
+  ctx.beginPath(); ctx.ellipse(W/2, playBot()+140, W*0.75, 220, 0, 0, 6.283); ctx.fill();
+  // simple set dressing
+  ctx.globalAlpha = 0.5;
+  if (vd.id==='park') {
+    for (const [fx,fy,r] of [[0.12,0.22,26],[0.88,0.2,32],[0.5,0.14,22]]) {
+      ctx.fillStyle='#274a2c'; ctx.beginPath(); ctx.arc(fx*W, playTop()+fy*(playBot()-playTop()), r, 0, 6.283); ctx.fill();
+      ctx.fillStyle='#3a2b1c'; ctx.fillRect(fx*W-3, playTop()+fy*(playBot()-playTop())+r-6, 6, 22);
+    }
+  } else if (vd.id==='club') {
+    const t = performance.now()/1000;
+    for (let i=0;i<4;i++){
+      ctx.fillStyle = ['#ff2f9255','#2fdcff55','#c02fff55','#ffe32f55'][i];
+      const bx = W*(0.2+0.2*i) + Math.sin(t*0.7+i)*30;
+      ctx.beginPath(); ctx.moveTo(bx,0); ctx.lineTo(bx-46, playBot()); ctx.lineTo(bx+46, playBot()); ctx.closePath(); ctx.fill();
+    }
+  } else {
+    ctx.fillStyle='#2c3448';
+    for (let i=0;i<3;i++) ctx.fillRect(W*0.14 + i*W*0.28, playTop()+30, W*0.16, 26);
+    ctx.fillStyle='#e8ecf455';
+    for (let i=0;i<5;i++) ctx.fillRect(W*0.1+i*W*0.18, 70, W*0.08, 5);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawNPC(d, n, t){
+  const husked = n.state==='husk', rec = n.state==='recover';
+  const y = n.y + Math.sin(t*1.7 + n.bob)*2.5;
+  // aura ring
+  if (!husked) {
+    const pulse = 1 + 0.5*Math.sin(t * (2 + n.i*9));
+    const rr = 24 + n.i*13 + pulse*2.5;
+    const col = n.v >= 0 ? '255,215,94' : '168,107,255';
+    const alpha = rec ? 0.10 : 0.14 + n.i*0.4;
+    const grad = ctx.createRadialGradient(n.x, y, 6, n.x, y, rr);
+    grad.addColorStop(0, 'rgba('+col+','+alpha+')');
+    grad.addColorStop(1, 'rgba('+col+',0)');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(n.x, y, rr, 0, 6.283); ctx.fill();
+    if (n.peak > 0) { // peak sparkle ring
+      ctx.strokeStyle = 'rgba(255,255,255,'+(0.5+0.4*Math.sin(t*12))+')';
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(n.x, y, rr+3, 0, 6.283*(n.peak/n.peakDur)); ctx.stroke();
+    }
+  }
+  // body
+  const gi = GROUPS.indexOf(d.group);
+  const bodyCols = ['#4e79d4','#d46a4e','#57b06a','#b05aa8','#c2a13c','#5aa8b0','#8a6ad4','#b0685a','#6ab058','#a85a78'];
+  ctx.fillStyle = husked ? '#4a4756' : bodyCols[gi % bodyCols.length];
+  ctx.beginPath(); ctx.ellipse(n.x, y+6, 13, 16, 0, 0, 6.283); ctx.fill();
+  // head
+  ctx.fillStyle = husked ? '#5c5968' : '#f0d3b8';
+  ctx.beginPath(); ctx.arc(n.x, y-12, 10, 0, 6.283); ctx.fill();
+  // face
+  ctx.fillStyle = husked ? '#39364a' : '#2b2340';
+  ctx.beginPath(); ctx.arc(n.x-3.5, y-13, husked?2.2:1.6, 0, 6.283); ctx.fill();
+  ctx.beginPath(); ctx.arc(n.x+3.5, y-13, husked?2.2:1.6, 0, 6.283); ctx.fill();
+  if (!husked) { // mouth curve by valence
+    ctx.strokeStyle = '#2b2340'; ctx.lineWidth = 1.4; ctx.beginPath();
+    const m = n.v*3.5;
+    ctx.moveTo(n.x-4, y-8); ctx.quadraticCurveTo(n.x, y-8+m, n.x+4, y-8); ctx.stroke();
+  } else { ctx.strokeStyle='#39364a'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(n.x-3,y-8); ctx.lineTo(n.x+3,y-8); ctx.stroke(); }
+  // selected marker
+  if (selected===d.id) {
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.arc(n.x, y, 28, t%6.283, t%6.283+6.283); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#fff'; ctx.font='600 11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(d.name, n.x, y-34);
+  }
+  if (run.upgrades && run.upgrades.sight && !husked) {
+    ctx.fillStyle = n.peak>0?'#fff':'#cfc6ee'; ctx.font='700 10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(Math.round(n.i*100)+'%', n.x, y+30);
+  }
+  if (rec) { ctx.fillStyle='#8effc1'; ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.fillText('💤 '+Math.ceil(n.recoverT), n.x, y+30); }
+}
+function drawParticles(){
+  for (let i=particles.length-1; i>=0; i--) {
+    const p = particles[i]; p.t += dtGlobal;
+    if (p.t >= p.life) { particles.splice(i,1); continue; }
+    const a = 1 - p.t/p.life;
+    p.x += p.vx*dtGlobal; p.y += p.vy*dtGlobal; p.vy += 40*dtGlobal;
+    if (p.txt) {
+      ctx.globalAlpha = a; ctx.fillStyle = p.color; ctx.font = '800 16px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(p.txt, p.x, p.y);
+    } else {
+      ctx.globalAlpha = a*0.9; ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ---------------- main loop ---------------- */
+let last = performance.now(), dtGlobal = 0.016;
+function frame(now){
+  dtGlobal = clamp((now-last)/1000, 0.001, 0.05);
+  last = now;
+  update(dtGlobal);
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+document.addEventListener('visibilitychange', ()=>{ if (document.hidden) { saveRun(); saveMeta(); } });
+window.addEventListener('pagehide', ()=>{ saveRun(); saveMeta(); });
+
+titleScreen();
+</script>
+</body>
+</html>
