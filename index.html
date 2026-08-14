@@ -253,7 +253,8 @@ const $ = id=>document.getElementById(id);
 /* ---------------- static data ---------------- */
 const DAY_LEN = 120;
 const LAST_DAY = 14;
-const quotaFor = d => 90 + 55*(d-1);
+// Past day 14 = Endless Dusk: the quota compounds 8%/day until you fall.
+const quotaFor = d => d <= LAST_DAY ? 90 + 55*(d-1) : Math.round(805 * Math.pow(1.08, d-LAST_DAY));
 
 const TIERS = [
   { min:0.92, name:'Transcendent', icon:'💎', color:'#9ef3ff' },
@@ -498,7 +499,7 @@ function mile(id){
 }
 
 /* ---------------- persistent meta ---------------- */
-let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[], relics:{}, mile:{}, maraShoos:0 };
+let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[], relics:{}, mile:{}, maraShoos:0, bestEndless:0 };
 try { const m = localStorage.getItem('auraFarmMeta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch(e) {}
 if (!meta.relics) meta.relics = {};
 if (!meta.mile) meta.mile = {};
@@ -525,6 +526,7 @@ function newRun(){
     contracts:[], contractsDone:0, dayContractsDone:0,
     mara:null, stolen:0, dayStolen:0,
     maraOffDay:0, maraDeal:null, maraDeepUsed:false, dayShoos:0, dayHuskedNames:[], jointF:0,
+    endless:false,
     zones, unlocked,
     owned:{ hype:true, snide:true }, upgrades:{} };
 }
@@ -538,7 +540,7 @@ function migrateRun(r){ // fill fields missing from older saves
     weather:'clear', event:null, veilT:0, arts:{}, artCd:{},
     essBy:emoZero(), dayEss:emoZero(), dayDistinct:{}, dayPeakN:0,
     contracts:[], contractsDone:0, dayContractsDone:0, mara:null, stolen:0, dayStolen:0, dayLen:dayLenFor(),
-    maraOffDay:0, maraDeal:null, maraDeepUsed:false, dayShoos:0, dayHuskedNames:[], jointF:0 };
+    maraOffDay:0, maraDeal:null, maraDeepUsed:false, dayShoos:0, dayHuskedNames:[], jointF:0, endless:false };
   for (const k in fresh) if (r[k]===undefined) r[k] = fresh[k];
   for (const v of VENUES) {
     if (!r.zones[v.id]) r.zones[v.id] = { total:0, rad:0, bli:0, bloomed:null };
@@ -931,6 +933,31 @@ function harvest(){
   renderPanel(); updateHud();
 }
 
+/* Gleaning: a husk can be picked over ONE last time for a small, fixed sum of
+   ash — then it crumbles to dust and its gloom goes with it. This is the
+   reaper's pressure valve (a shrinking reserve when the wells run dry) and
+   anyone's gloom cleanup — but the ash always stains the ledger as Blight. */
+function glean(){
+  if (!run || mode!=='play' || modalOpen) return;
+  const n = selected && run.npcs[selected]; if (!n || n.state!=='husk') return;
+  if (run.focus < 5) return;
+  const def = npcDef(selected);
+  run.focus -= 5;
+  const amt = 20 + run.day;
+  run.essence += amt; run.dayEarned += amt;
+  run.bli += amt; run.dayBli += amt;
+  const z = run.zones[def.venue]; z.total += amt; z.bli += amt;
+  n.state = 'taken';
+  run.combo = 0;
+  burst(n.x, n.y, '#8a8494', 14);
+  floatText(n.x, n.y-30, '+'+amt+' ⚱️', '#b8b2c4');
+  sfx.harvB();
+  toast(def.name+'’s husk crumbles to dust. The gloom lifts — the ash is yours.');
+  selected = null;
+  checkBloom(def.venue);
+  renderPanel(); updateHud();
+}
+
 function checkBloom(vid){
   const z = run.zones[vid], vd = venueById(vid);
   if (z.bloomed || z.total < vd.bloomAt) return;
@@ -1206,7 +1233,7 @@ function endDay(){
   if (!met) { sfx.fail(); return gameOver(); }
   sfx.day();
   run.history.push({ d:run.day, rad:run.dayRad, bli:run.dayBli });
-  if (run.day >= LAST_DAY) return ending();
+  if (run.day >= LAST_DAY && !run.endless) return ending();
   const husks = ROSTER.filter(d=>run.npcs[d.id].state==='husk').length;
   showModal(`
     <h2>Dusk falls on Day ${run.day}</h2>
@@ -1274,6 +1301,9 @@ function composeLetter(prev){
     from = recovered.length ? pick(recovered).name : 'A stranger';
     body = 'I do not know what you did to me yesterday, exactly. I only know I went home lighter than I have in years, and slept without dreaming, and woke up wanting to be somewhere. Whoever you are — thank you. Come back any time.';
     sig = '— '+from;
+  } else if (d>=4 && (()=>{ const un = ROSTER.filter(x=>run.unlocked[x.venue]).length;
+      return un>0 && huskCount/un >= 0.4; })()) {
+    body = 'A word from your accountant, which is me: '+huskCount+' husks now stand where suppliers used to. You are eating your seed corn, harvester. Husks can be gleaned once for their ash — a reaper’s pension, not an income. Leave enough souls singing to feed tomorrow, or tomorrow will not feed you.';
   } else if (purity>=0.8 && d>=5) {
     body = 'Your ledgers confuse my accountants. All this light, all this patience — and the essence still flows. I built this trade on the assumption that kindness does not scale. You are making me look bad, and making me money. Continue, I suppose.';
   } else if (purity<=0.2 && d>=5) {
@@ -1352,9 +1382,12 @@ function foldLetter(){
 function gameOver(){
   mode = 'over';
   const p = Math.round(100 * run.rad / Math.max(1, run.rad+run.bli));
+  const endlessDepth = run.endless ? run.day : 0;
+  if (endlessDepth) { meta.bestEndless = Math.max(meta.bestEndless||0, endlessDepth); saveMeta(); }
   showModal(`
-    <h2>The Farm Withers</h2>
+    <h2>${endlessDepth ? 'The Endless Dusk Claims You' : 'The Farm Withers'}</h2>
     <div class="sub">Day ${run.day} ended at ✦${run.dayEarned} of the ✦${quotaFor(run.day)} quota. The aura wells run dry.</div>
+    ${endlessDepth ? `<div class="statline"><span>🌒 Endless depth</span><b>Day ${endlessDepth}${meta.bestEndless>endlessDepth?' · best '+meta.bestEndless:' · NEW BEST'}</b></div>` : ''}
     <div class="statline"><span>Days survived</span><b>${run.day}</b></div>
     <div class="statline"><span>Total harvested</span><b>✦ ${run.rad+run.bli}</b></div>
     <div class="statline"><span>Radiance purity</span><b>${p}%</b></div>
@@ -1409,13 +1442,23 @@ function ending(){
     <div class="statline"><span>Sets completed</span><b>${setsDone()} / ${GROUPS.length}</b></div>
     <h3>Run essences</h3>${essBars(run.essBy)}
     <h3>How each day was farmed</h3>${bars}
-    <button class="big" onclick="restart()">Farm Again</button>
+    <button class="big" onclick="enterEndless()">🌒 Endless Dusk ➜</button>
+    <div class="sub" style="text-align:center;margin:4px 0 0">The run needn’t end. Quotas rise 8% each dusk — how deep can you go?${meta.bestEndless?' Best: Day '+meta.bestEndless+'.':''}</div>
+    <button class="big ghost" onclick="restart()">Farm Again</button>
     <button class="big ghost" onclick="toTitle()">Title</button>
   `, true);
-  run = null; saveRun(); stopAmbient();
+  saveRun(); stopAmbient();
 }
-function restart(){ closeModal(); startGame(true); }
-function toTitle(){ closeModal(); titleScreen(); }
+function enterEndless(){
+  if (!run) return;
+  run.endless = true; mode = 'play';
+  startAmbient(run.venue);
+  closeModal();
+  nextDay();
+  toast('🌒 The dusk never ends now. Every quota is steeper than the last.');
+}
+function restart(){ run = null; saveRun(); closeModal(); startGame(true); }
+function toTitle(){ run = null; saveRun(); closeModal(); titleScreen(); }
 
 /* ---------------- UI: hud, panel, toasts, particles ---------------- */
 function updateHud(){
@@ -1473,6 +1516,7 @@ function renderPanel(soft){
   $('npcGroup').textContent = d.group;
   $('npcMood').innerHTML = moodText(n) + '<br><span style="opacity:.62;font-size:11.5px">'+traitLine(d.id)+'</span>';
   updateMeters(n);
+  if (soft && n.state==='husk') return renderPanel(); // keep the glean button honest
   if (soft) { // just refresh disabled states + mood
     for (const btn of $('npcActions').querySelectorAll('.act[data-a]')) {
       const a = ACTIONS[btn.dataset.a];
@@ -1485,6 +1529,15 @@ function renderPanel(soft){
     return;
   }
   const box = $('npcActions'); box.innerHTML = '';
+  if (n.state==='husk') {
+    const gb = document.createElement('button');
+    gb.className = 'act harvB';
+    gb.innerHTML = 'Glean ✦ Ash<span class="cost">⚱️ +'+(20+run.day)+'✦ · 5 focus · they crumble to dust · counts as Blight</span>';
+    gb.onclick = glean;
+    gb.disabled = run.focus < 5;
+    box.appendChild(gb);
+    return;
+  }
   for (const id in ACTIONS) {
     if (!run.owned[id]) continue;
     const a = ACTIONS[id];
@@ -1719,7 +1772,8 @@ function howTo(back){
   <p><b>📜 The Broker posts 3 contracts each morning</b> — deliver specific essences, land clean captures, chain combos. Payouts are instant; the hardest contracts pay in <b style="color:#9ef3ff">relics</b>, permanent powers kept across every run.</p>
   <p><b>🩶 Mara the Gray</b> arrives on day 3 — the Broker’s other harvester. She siphons whatever you leave ripening; tap her to flare your aura and drive her off. She grows <b>bolder</b> as the run goes on: from day 6 she snipes peak windows, and from day 10 she’ll try a <b style="color:#ff8da8">deep drain</b> — stop her within 8 seconds or she husks someone outright.</p>
   <p><b>✉️ Letters arrive each morning</b> — the Broker reacts to how you farm, the husked leave notes, and from day 5 Mara slips <b>bargains</b> under the door: tributes, joint hunts, husk trades. Every deal has a price.</p>
-  <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. People have learnable <b>traits</b>, days have <b>weather</b> and <b>venue events</b>, and six venues unlock as you push each one to its bloom threshold.</p>
+  <p><b>Husks can be gleaned</b> — one last ⚱️ handful of ash and they crumble to dust, gloom and all. It always counts as Blight. When a reaper’s wells run dry, the bones are what’s left.</p>
+  <p><b>The Specimen Case</b> keeps one peak aura per person — across every run. Complete a whole social group for a permanent +5% set bonus. People have learnable <b>traits</b>, days have <b>weather</b> and <b>venue events</b>, and six venues unlock as you push each one to its bloom threshold. Survive all 14 days and the <b>🌒 Endless Dusk</b> opens — quotas rise 8% each day until you fall.</p>
   </div><button class="big" onclick="${back==='title'?'titleScreen()':'closeModal()'}">Got it</button>`, true);
   meta.seenHow = true; saveMeta();
 }
@@ -1732,7 +1786,7 @@ function titleScreen(){
   const specs = Object.keys(meta.case).length;
   const nRelics = Object.keys(meta.relics).length;
   showModal(`<div class="titleWrap"><h1>AURA FARM</h1><div class="tg">harvest feelings · choose what you become</div></div>
-    ${specs||nRelics?`<div class="sub" style="text-align:center">📦 ${specs}/${ROSTER.length} specimens · ${setsDone()} sets · 🔮 ${nRelics}/${RELICS.length} relics${meta.bestPurity!==null?' · last purity '+meta.bestPurity+'%':''}</div>`:''}
+    ${specs||nRelics?`<div class="sub" style="text-align:center">📦 ${specs}/${ROSTER.length} specimens · ${setsDone()} sets · 🔮 ${nRelics}/${RELICS.length} relics${meta.bestPurity!==null?' · last purity '+meta.bestPurity+'%':''}${meta.bestEndless?' · 🌒 endless best day '+meta.bestEndless:''}</div>`:''}
     ${hasSave?'<button class="big" onclick="startGame(false)">Continue Run</button>':''}
     <button class="big ${hasSave?'ghost':''}" onclick="confirmNew()">New Run</button>
     <button class="big ghost" onclick="howTo('title')">How to Farm</button>
