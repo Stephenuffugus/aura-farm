@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Aura Farm</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%236d35c9'/%3E%3Ccircle cx='32' cy='32' r='16' fill='%23a86bff'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23ffd75e'/%3E%3C/svg%3E">
 <style>
   :root {
     --gold:#ffd75e; --gold-deep:#e8a92c; --viol:#a86bff; --viol-deep:#6d35c9;
@@ -1805,7 +1806,8 @@ function titleScreen(){
     ${hasSave?'<button class="big" onclick="startGame(false)">Continue Run</button>':''}
     <button class="big ${hasSave?'ghost':''}" onclick="confirmNew()">New Run</button>
     <button class="big ghost" onclick="howTo('title')">How to Farm</button>
-    <button class="big ghost" onclick="openRecords('title')">Records &amp; Relics</button>`, true);
+    <button class="big ghost" onclick="openRecords('title')">Records &amp; Relics</button>
+    ${SWS_FRAMED?'<button class="big ghost" onclick="swsExit()">&larr; Back to Sky Wolf</button>':''}`, true);
 }
 function confirmNew(){
   if (loadRun()) {
@@ -2495,6 +2497,15 @@ requestAnimationFrame(frame);
 
 document.addEventListener('visibilitychange', ()=>{ if (document.hidden) { saveRun(); saveMeta(); } });
 window.addEventListener('pagehide', ()=>{ saveRun(); saveMeta(); });
+
+/* Sky Wolf Studios portal bridge. The portal's black-screen watchdog needs
+   {sws:'ready'} on EVERY load (silence after a load = it yanks the player
+   back to the arcade), and the title screen grows a framed-only exit that
+   posts {sws:'close'} so the portal's shell handles the return trip. */
+const SWS_FRAMED = (()=>{ try { return window.parent !== window; } catch(e){ return true; } })();
+function swsPostReady(){ try { if (SWS_FRAMED) parent.postMessage({sws:'ready'}, '*'); } catch(e){} }
+function swsExit(){ try { parent.postMessage({sws:'close'}, '*'); } catch(e){} }
+swsPostReady(); window.addEventListener('load', swsPostReady);
 
 titleScreen();
 </script>
