@@ -236,6 +236,10 @@
 <div id="toasts"></div>
 <div id="modal"><div id="modalContent"></div></div>
 
+<!-- Sunbeam wallet: earns credit only when served same-origin on lucidwinds.com
+     (the vendored satellite copy). Loading it here is harmless elsewhere. -->
+<script src="https://lucidwinds.com/sunbeam-sdk.js?v=7"></script>
+<script>window.Sunbeam&&Sunbeam.init({gameId:"aura-farm"}).catch(function(){});</script>
 <script>
 'use strict';
 /* =========================================================
@@ -500,12 +504,63 @@ function mile(id){
 }
 
 /* ---------------- persistent meta ---------------- */
-let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[], relics:{}, mile:{}, maraShoos:0, bestEndless:0 };
+let meta = { case:{}, known:{}, muted:false, seenHow:false, bestPurity:null, endings:[], relics:{}, mile:{}, maraShoos:0, bestEndless:0, rep:{ runs:[], failed:0 } };
 try { const m = localStorage.getItem('auraFarmMeta'); if (m) meta = Object.assign(meta, JSON.parse(m)); } catch(e) {}
 if (!meta.relics) meta.relics = {};
 if (!meta.mile) meta.mile = {};
 if (!meta.maraShoos) meta.maraShoos = 0;
+if (!meta.rep) meta.rep = { runs:[], failed:0 };
 function saveMeta(){ try { localStorage.setItem('auraFarmMeta', JSON.stringify(meta)); } catch(e) {} }
+
+/* ---------------- Broker reputation (persists across runs) ----------------
+   Every FINISHED run is remembered as lum / gray / reap; withered runs count
+   as failures. The trade reads your history: the day-2 letter greets who you
+   have been, Mara prices her tribute by it, and the title screen shows your
+   standing. */
+function repLean(){
+  const rs = meta.rep.runs || [];
+  const c = { lum:0, gray:0, reap:0 };
+  for (const r of rs) c[r.t] = (c[r.t]||0)+1;
+  let lean = null;
+  if (rs.length) {
+    if (c.lum > c.reap && c.lum >= c.gray) lean = 'lum';
+    else if (c.reap > c.lum && c.reap >= c.gray) lean = 'reap';
+    else lean = 'gray';
+  }
+  return { n:rs.length, c, lean, last: rs.length ? rs[rs.length-1].t : null, failed: meta.rep.failed||0 };
+}
+function repRecordRun(type, purity, emo){
+  meta.rep.runs.push({ t:type, p:purity, emo:emo||null });
+  if (meta.rep.runs.length > 20) meta.rep.runs.shift();
+  saveMeta();
+}
+const REP_NAMES = { lum:'Luminary', gray:'Gray Broker', reap:'Reaper' };
+function repTitleLine(){
+  const r = repLean();
+  if (!r.n) return '';
+  const parts = [];
+  if (r.c.lum) parts.push('🌞 Luminary ×'+r.c.lum);
+  if (r.c.gray) parts.push('⚖️ Gray ×'+r.c.gray);
+  if (r.c.reap) parts.push('🥀 Reaper ×'+r.c.reap);
+  return '<div class="sub" style="text-align:center">The trade knows you: '+parts.join(' · ')+'</div>';
+}
+function tributePrice(){
+  const lean = repLean().lean;
+  return lean==='reap' ? 90 : lean==='lum' ? 150 : 120;
+}
+
+/* Sky Wolf sunbeam earn standard: 30/day/game cap (SUNBEAM_EARN_POLICY.md).
+   Credits only when served same-origin on lucidwinds.com (the vendored
+   satellite copy); everywhere else it quietly does nothing. */
+window._sbCapEarn = window._sbCapEarn || function(n,tag){
+  try{ var k='sw_sb_'+((location.pathname.split('/').filter(function(x){return x&&x!=='index.html';}).pop())||'game');
+    var s={}; try{s=JSON.parse(localStorage.getItem(k)||'{}');}catch(e){}
+    var d=Math.floor(Date.now()/864e5); if(s.d!==d)s={d:d,n:0};
+    n=Math.min(n, Math.max(0, 30-(s.n||0))); if(n<=0)return;
+    s.n=(s.n||0)+n; localStorage.setItem(k,JSON.stringify(s));
+  }catch(e){}
+  if(window.Sunbeam&&Sunbeam.earn) Sunbeam.earn(n,tag).catch(function(){});
+};
 
 /* ---------------- run state ---------------- */
 let run = null;
@@ -613,6 +668,7 @@ function completeContract(c){
   const pay = c.reward * (relic('quill')?2:1);
   run.essence += pay; run.contractsDone++; run.dayContractsDone++;
   sfx.buy();
+  window._sbCapEarn && window._sbCapEarn(1,'aura-farm:contract');
   toast('📜 Contract fulfilled: '+c.label+' — +'+pay+'✦');
   if (c.givesRelic) awardRelic();
   updateHud();
@@ -1248,6 +1304,7 @@ function endDay(){
   const met = run.dayEarned >= quotaFor(run.day);
   if (!met) { sfx.fail(); return gameOver(); }
   sfx.day();
+  window._sbCapEarn && window._sbCapEarn(2,'aura-farm:dusk');
   run.history.push({ d:run.day, rad:run.dayRad, bli:run.dayBli });
   if (run.day >= LAST_DAY && !run.endless) return ending();
   const husks = ROSTER.filter(d=>run.npcs[d.id].state==='husk').length;
@@ -1293,7 +1350,18 @@ function composeLetter(prev){
   const huskCount = ROSTER.filter(x=>run.npcs[x.id].state==='husk').length;
   let from = 'The Broker', body = '', sig = '— B.';
   if (d===2) {
-    body = 'A promising first dusk. Remember the terms: the quota is not a suggestion, and the contracts are where the real money sleeps. Fulfill the hard ones and I will part with things I should not part with — relic things, old things. Do not disappoint me.';
+    const rep = repLean();
+    if (rep.n===0 && rep.failed>0) {
+      body = 'Last season the farm withered before the fourteenth dusk. I do not hold grudges; I hold ledgers, and this one starts at zero. The quota is not a suggestion. Prove the withering was weather.';
+    } else if (rep.last==='lum') {
+      body = 'You again. Last harvest you left my fields glowing, and the buyers who like light have been asking for you by name. Pretty work, profitable in the slow way. Show me it was a method and not a mood.';
+    } else if (rep.last==='reap') {
+      body = 'Back for another pass. The fields still remember your last one: quiet rows, empty doorways. My darker buyers were delighted. My accountants remind me that husks do not regrow. Pace yourself this season.';
+    } else if (rep.last==='gray') {
+      body = 'You are becoming a fixture: never quite radiant, never quite ruinous. There is money in being unreadable. There is more in being decisive. The quota rises either way.';
+    } else {
+      body = 'A promising first dusk. Remember the terms: the quota is not a suggestion, and the contracts are where the real money sleeps. Fulfill the hard ones and I will part with things I should not part with — relic things, old things. Do not disappoint me.';
+    }
   } else if (d===3) {
     body = 'A courtesy, before you hear it from the crowds: I employ another harvester. Mara works the same fields you do, and she does not knock. What ripens unpicked, she drinks. Consider her a lesson in punctuality — or flare your aura at her and see how she takes it.';
   } else if (d===LAST_DAY) {
@@ -1348,8 +1416,12 @@ function composeLetter(prev){
   // Mara's bargains ride along from day 5
   let bargain = null;
   if (d>=5 && Math.random()<0.45) {
+    const tp = tributePrice();
+    const ttxt = tp===90 ? 'Pay ✦90 and Mara rests today. A professional courtesy, one harvester of the dark to another.'
+               : tp===150 ? 'Pay ✦150 and Mara rests today. The price is higher for you. She knows what the light pays.'
+               : 'Pay ✦120 and Mara rests today — your fields, untouched, until dusk.';
     const options = [
-      { id:'tribute', bt:'THE TRIBUTE', txt:'Pay ✦120 and Mara rests today — your fields, untouched, until dusk.', ok:'Pay ✦120' },
+      { id:'tribute', bt:'THE TRIBUTE', txt:ttxt, ok:'Pay ✦'+tp },
       { id:'joint',   bt:'THE JOINT HUNT', txt:'Let Mara feed freely today — she siphons 60% faster, but half of every drop she takes flows back to you as essence.', ok:'Shake on it' },
     ];
     const husks2 = ROSTER.filter(x=>run.npcs[x.id].state==='husk').length;
@@ -1372,8 +1444,9 @@ function showLetter(L){
 function acceptBargain(){
   const b = pendingBargain; if (!b) return foldLetter();
   if (b.id==='tribute') {
-    if (run.essence < 120) { toast('You can’t afford the tribute (✦120).'); return; }
-    run.essence -= 120; run.maraOffDay = run.day; run.mara = null;
+    const tp = tributePrice();
+    if (run.essence < tp) { toast('You can’t afford the tribute (✦'+tp+').'); return; }
+    run.essence -= tp; run.maraOffDay = run.day; run.mara = null;
     toast('🕯️ Tribute paid. Mara will not walk your fields today.');
   } else if (b.id==='joint') {
     run.maraDeal = 'joint';
@@ -1399,7 +1472,10 @@ function gameOver(){
   mode = 'over';
   const p = Math.round(100 * run.rad / Math.max(1, run.rad+run.bli));
   const endlessDepth = run.endless ? run.day : 0;
-  if (endlessDepth) { meta.bestEndless = Math.max(meta.bestEndless||0, endlessDepth); saveMeta(); }
+  if (endlessDepth) {
+    if (endlessDepth > (meta.bestEndless||0)) window._sbCapEarn && window._sbCapEarn(4,'aura-farm:endless_best');
+    meta.bestEndless = Math.max(meta.bestEndless||0, endlessDepth); saveMeta();
+  } else { meta.rep.failed = (meta.rep.failed||0)+1; saveMeta(); }
   showModal(`
     <h2>${endlessDepth ? 'The Endless Dusk Claims You' : 'The Farm Withers'}</h2>
     <div class="sub">Day ${run.day} ended at ✦${run.dayEarned} of the ✦${quotaFor(run.day)} quota. The aura wells run dry.</div>
@@ -1439,7 +1515,10 @@ function ending(){
   const frac = specs.length/ROSTER.length;
   const grade = frac>=0.82&&avgI>=0.8?'S':frac>=0.6&&avgI>=0.65?'A':frac>=0.38&&avgI>=0.5?'B':'C';
   if (!meta.endings.includes(title)) meta.endings.push(title);
-  meta.bestPurity = pct; saveMeta();
+  meta.bestPurity = pct;
+  repRecordRun(p>=0.85?'lum':p<=0.15?'reap':'gray', pct, domEmo);
+  window._sbCapEarn && window._sbCapEarn(8,'aura-farm:run_end');
+  saveMeta();
   const husks = ROSTER.filter(d=>run.npcs[d.id].state==='husk').length;
   const bars = run.history.map(h=>{ const t2 = h.rad+h.bli || 1; const rp = Math.round(100*h.rad/t2);
     return `<div style="display:flex;align-items:center;gap:6px;margin:3px 0;font-size:11px"><span style="width:30px;opacity:.6">D${h.d}</span><div style="flex:1;height:8px;border-radius:4px;overflow:hidden;display:flex;background:rgba(255,255,255,.08)"><div style="width:${rp}%;background:#ffd75e"></div><div style="flex:1;background:#a86bff"></div></div></div>`;
@@ -1803,6 +1882,7 @@ function titleScreen(){
   const nRelics = Object.keys(meta.relics).length;
   showModal(`<div class="titleWrap"><h1>AURA FARM</h1><div class="tg">harvest feelings · choose what you become</div></div>
     ${specs||nRelics?`<div class="sub" style="text-align:center">📦 ${specs}/${ROSTER.length} specimens · ${setsDone()} sets · 🔮 ${nRelics}/${RELICS.length} relics${meta.bestPurity!==null?' · last purity '+meta.bestPurity+'%':''}${meta.bestEndless?' · 🌒 endless best day '+meta.bestEndless:''}</div>`:''}
+    ${repTitleLine()}
     ${hasSave?'<button class="big" onclick="startGame(false)">Continue Run</button>':''}
     <button class="big ${hasSave?'ghost':''}" onclick="confirmNew()">New Run</button>
     <button class="big ghost" onclick="howTo('title')">How to Farm</button>
